@@ -1,16 +1,32 @@
+import { useEffect, useState } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientText } from "@/components/GradientText";
-import { Navbar } from "@/components/Navbar";
+import { useCompany } from "@/contexts/CompanyContext";
 import { 
   TrendingUp, 
   DollarSign, 
   Target, 
   Users, 
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Building2
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const { company } = useCompany();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!company) {
+      navigate("/company-setup");
+    }
+  }, [company, navigate]);
+
+  if (!company) {
+    return null;
+  }
   const kpis = [
     {
       title: "Lucro Líquido",
@@ -47,20 +63,24 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="mb-12 animate-fade-up">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <GradientText>Dashboard Financeiro</GradientText>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="mb-8 animate-fade-up">
+        <div className="flex items-center gap-3 mb-4">
+          <Building2 className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold">
+              <GradientText>{company.name}</GradientText>
             </h1>
-            <p className="text-xl text-muted-foreground">
-              Visão geral das suas métricas e indicadores em tempo real
+            <p className="text-sm text-muted-foreground">
+              Regime: {company.tax_regime.replace("_", " ")} • Período: {company.fiscal_period}
             </p>
           </div>
+        </div>
+        <p className="text-lg text-muted-foreground">
+          Visão geral das suas métricas e indicadores em tempo real
+        </p>
+      </div>
 
           {/* Bento Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -146,8 +166,6 @@ export default function Dashboard() {
               </div>
             </GlassCard>
           </div>
-        </div>
-      </main>
     </div>
   );
 }

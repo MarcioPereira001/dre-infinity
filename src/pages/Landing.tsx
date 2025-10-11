@@ -99,14 +99,14 @@ export default function Landing() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button variant="hero" size="lg" className="text-lg px-8" asChild>
-                <Link to="/signup">
+                <Link to="/auth">
                   Experimentar Grátis
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>
               </Button>
               <Button variant="glass" size="lg" className="text-lg px-8" asChild>
-                <Link to="/dashboard">
-                  Ver Dashboard
+                <Link to="/auth">
+                  Fazer Login
                 </Link>
               </Button>
             </div>
@@ -165,7 +165,7 @@ export default function Landing() {
                     mais moderna e intuitiva do mercado.
                   </p>
                   <Button variant="hero" size="lg" asChild>
-                    <Link to="/signup">
+                    <Link to="/auth">
                       Começar Agora
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Link>
@@ -203,7 +203,7 @@ export default function Landing() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button variant="hero" size="lg" className="text-lg px-8" asChild>
-                <Link to="/signup">
+                <Link to="/auth">
                   Criar Conta Grátis
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>

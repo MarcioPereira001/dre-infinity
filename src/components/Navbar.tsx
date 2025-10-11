@@ -19,10 +19,10 @@ export const Navbar = () => {
 
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
-              <Link to="/login">Login</Link>
+              <Link to="/auth">Login</Link>
             </Button>
             <Button variant="hero" asChild>
-              <Link to="/signup">Começar Agora</Link>
+              <Link to="/auth">Começar Agora</Link>
             </Button>
           </div>
         </div>
