@@ -14,16 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          created_at: string
+          fiscal_period: string
+          id: string
+          name: string
+          owner_id: string
+          tax_id: string | null
+          tax_regime: Database["public"]["Enums"]["tax_regime"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fiscal_period?: string
+          id?: string
+          name: string
+          owner_id: string
+          tax_id?: string | null
+          tax_regime?: Database["public"]["Enums"]["tax_regime"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fiscal_period?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          tax_id?: string | null
+          tax_regime?: Database["public"]["Enums"]["tax_regime"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dre_categories: {
+        Row: {
+          category_type: Database["public"]["Enums"]["category_type"]
+          company_id: string
+          cost_classification:
+            | Database["public"]["Enums"]["cost_classification"]
+            | null
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_type: Database["public"]["Enums"]["category_type"]
+          company_id: string
+          cost_classification?:
+            | Database["public"]["Enums"]["cost_classification"]
+            | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_type?: Database["public"]["Enums"]["category_type"]
+          company_id?: string
+          cost_classification?:
+            | Database["public"]["Enums"]["cost_classification"]
+            | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dre_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dre_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "dre_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          month: number
+          transaction_date: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          month: number
+          transaction_date: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          month?: number
+          transaction_date?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dre_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "user"
+      category_type: "revenue" | "cost" | "expense"
+      cost_classification: "fixed" | "variable"
+      tax_regime: "simples_nacional" | "lucro_presumido" | "lucro_real"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "user"],
+      category_type: ["revenue", "cost", "expense"],
+      cost_classification: ["fixed", "variable"],
+      tax_regime: ["simples_nacional", "lucro_presumido", "lucro_real"],
+    },
   },
 } as const
