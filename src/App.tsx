@@ -11,6 +11,9 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CompanySetup from "./pages/CompanySetup";
+import Settings from "./pages/Settings";
+import Transactions from "./pages/Transactions";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,11 +48,21 @@ const App = () => (
                 }
               />
               <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Settings />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/transactions"
                 element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <div>Lançamentos - Em desenvolvimento</div>
+                      <Transactions />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
@@ -59,17 +72,7 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <div>Relatórios - Em desenvolvimento</div>
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <div>Configurações - Em desenvolvimento</div>
+                      <Reports />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
