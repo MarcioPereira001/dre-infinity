@@ -57,7 +57,7 @@ export default function Transactions() {
   const { transactions, loading, createTransaction, updateTransaction, deleteTransaction } =
     useTransactions({
       search: searchTerm,
-      categoryId: filterCategory || undefined,
+      categoryId: filterCategory && filterCategory !== "all" ? filterCategory : undefined,
     });
 
   const { categories } = useCategories();
@@ -149,7 +149,7 @@ export default function Transactions() {
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
                   {cat.name}
