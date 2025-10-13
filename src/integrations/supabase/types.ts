@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          email: string | null
+          first_purchase_date: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          tax_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          email?: string | null
+          first_purchase_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          email?: string | null
+          first_purchase_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string
@@ -107,43 +154,150 @@ export type Database = {
           },
         ]
       }
+      metrics_cache: {
+        Row: {
+          average_ticket: number | null
+          break_even_point: number | null
+          cac: number | null
+          company_id: string
+          contribution_margin: number | null
+          created_at: string | null
+          fixed_costs: number | null
+          id: string
+          last_calculated_at: string | null
+          ltv: number | null
+          ltv_cac_ratio: number | null
+          marketing_costs: number | null
+          net_revenue: number | null
+          new_clients_count: number | null
+          operational_costs: number | null
+          period_month: number
+          period_year: number
+          repeat_customers_count: number | null
+          roi: number | null
+          safety_margin: number | null
+          sales_costs: number | null
+          total_active_clients: number | null
+          total_revenue: number | null
+          total_sales_count: number | null
+          variable_costs: number | null
+        }
+        Insert: {
+          average_ticket?: number | null
+          break_even_point?: number | null
+          cac?: number | null
+          company_id: string
+          contribution_margin?: number | null
+          created_at?: string | null
+          fixed_costs?: number | null
+          id?: string
+          last_calculated_at?: string | null
+          ltv?: number | null
+          ltv_cac_ratio?: number | null
+          marketing_costs?: number | null
+          net_revenue?: number | null
+          new_clients_count?: number | null
+          operational_costs?: number | null
+          period_month: number
+          period_year: number
+          repeat_customers_count?: number | null
+          roi?: number | null
+          safety_margin?: number | null
+          sales_costs?: number | null
+          total_active_clients?: number | null
+          total_revenue?: number | null
+          total_sales_count?: number | null
+          variable_costs?: number | null
+        }
+        Update: {
+          average_ticket?: number | null
+          break_even_point?: number | null
+          cac?: number | null
+          company_id?: string
+          contribution_margin?: number | null
+          created_at?: string | null
+          fixed_costs?: number | null
+          id?: string
+          last_calculated_at?: string | null
+          ltv?: number | null
+          ltv_cac_ratio?: number | null
+          marketing_costs?: number | null
+          net_revenue?: number | null
+          new_clients_count?: number | null
+          operational_costs?: number | null
+          period_month?: number
+          period_year?: number
+          repeat_customers_count?: number | null
+          roi?: number | null
+          safety_margin?: number | null
+          sales_costs?: number | null
+          total_active_clients?: number | null
+          total_revenue?: number | null
+          total_sales_count?: number | null
+          variable_costs?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metrics_cache_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
           category_id: string | null
+          client_id: string | null
           company_id: string
           created_at: string
           created_by: string | null
           description: string
           id: string
+          is_marketing_cost: boolean | null
+          is_new_client: boolean | null
+          is_sales_cost: boolean | null
           month: number
           transaction_date: string
+          transaction_type: string | null
           updated_at: string
           year: number
         }
         Insert: {
           amount: number
           category_id?: string | null
+          client_id?: string | null
           company_id: string
           created_at?: string
           created_by?: string | null
           description: string
           id?: string
+          is_marketing_cost?: boolean | null
+          is_new_client?: boolean | null
+          is_sales_cost?: boolean | null
           month: number
           transaction_date: string
+          transaction_type?: string | null
           updated_at?: string
           year: number
         }
         Update: {
           amount?: number
           category_id?: string | null
+          client_id?: string | null
           company_id?: string
           created_at?: string
           created_by?: string | null
           description?: string
           id?: string
+          is_marketing_cost?: boolean | null
+          is_new_client?: boolean | null
+          is_sales_cost?: boolean | null
           month?: number
           transaction_date?: string
+          transaction_type?: string | null
           updated_at?: string
           year?: number
         }
@@ -153,6 +307,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "dre_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {

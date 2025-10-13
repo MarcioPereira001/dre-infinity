@@ -69,6 +69,11 @@ export function useTransactions(filters?: TransactionFilters) {
     transaction_date: string;
     category_id: string | null;
     created_by?: string;
+    client_id?: string | null;
+    is_new_client?: boolean;
+    is_marketing_cost?: boolean;
+    is_sales_cost?: boolean;
+    transaction_type?: "administrative" | "operational";
   }) => {
     if (!company) return;
 
@@ -103,7 +108,13 @@ export function useTransactions(filters?: TransactionFilters) {
     }
   };
 
-  const updateTransaction = async (id: string, updates: Partial<TransactionInsert>) => {
+  const updateTransaction = async (id: string, updates: Partial<TransactionInsert> & {
+    client_id?: string | null;
+    is_new_client?: boolean;
+    is_marketing_cost?: boolean;
+    is_sales_cost?: boolean;
+    transaction_type?: "administrative" | "operational";
+  }) => {
     try {
       const { error } = await supabase
         .from("transactions")

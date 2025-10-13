@@ -4,6 +4,7 @@ import { GradientText } from "@/components/GradientText";
 import { GlassCard } from "@/components/GlassCard";
 import { useEffect, useState } from "react";
 import { useDRE } from "@/hooks/useDRE";
+import { useMetrics } from "@/hooks/useMetrics";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   LineChart,
   Line,
@@ -27,6 +29,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { TrendingUp, TrendingDown, DollarSign, Users, Target, Activity } from "lucide-react";
 
 export default function Dashboard() {
   const { company, companies, loading: companyLoading } = useCompany();
@@ -37,6 +40,7 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const { dreData, loading: dreLoading } = useDRE(selectedMonth, selectedYear);
+  const { metricsData, loading: metricsLoading } = useMetrics(selectedMonth, selectedYear);
 
   useEffect(() => {
     if (!companyLoading && companies.length === 0) {
@@ -80,7 +84,7 @@ export default function Dashboard() {
 
   const years = Array.from({ length: 10 }, (_, i) => currentDate.getFullYear() - i);
 
-  const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))"];
+  const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--destructive))"];
 
   // Mock data for charts - In production, this would come from the database
   const monthlyData = [
@@ -90,13 +94,22 @@ export default function Dashboard() {
     { month: "Abr", lucroLiquido: dreData?.lucroLiquido || 0, margemLiquida: dreData?.margemLiquida || 0 },
   ];
 
-  const compositionData = dreData
+  const compositionData = metricsData
     ? [
-        { name: "Lucro Líquido", value: dreData.lucroLiquido },
-        { name: "Custos", value: dreData.cmv },
-        { name: "Despesas", value: dreData.despesasOperacionais },
+        { name: "Receita Líquida", value: metricsData.netRevenue },
+        { name: "Custos Fixos", value: metricsData.fixedCosts },
+        { name: "Custos Variáveis", value: metricsData.variableCosts },
+        { name: "Marketing", value: metricsData.marketingCosts },
       ]
     : [];
+
+  const ltvCacRatioColor = metricsData && metricsData.ltvCacRatio >= 3 
+    ? "text-green-500" 
+    : "text-red-500";
+
+  const ltvCacProgress = metricsData && metricsData.cac > 0
+    ? Math.min((metricsData.ltvCacRatio / 3) * 100, 100)
+    : 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -151,12 +164,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* KPIs Grid */}
+      {/* DRE KPIs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            Lucro Líquido
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Lucro Líquido</h3>
+            <DollarSign className="w-5 h-5 text-primary" />
+          </div>
           <p className="text-3xl font-bold">
             <GradientText>
               {dreLoading ? "..." : formatCurrency(dreData?.lucroLiquido || 0)}
@@ -168,9 +182,10 @@ export default function Dashboard() {
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            Lucro Bruto
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Lucro Bruto</h3>
+            <TrendingUp className="w-5 h-5 text-primary" />
+          </div>
           <p className="text-3xl font-bold">
             <GradientText>
               {dreLoading ? "..." : formatCurrency(dreData?.lucroBruto || 0)}
@@ -182,9 +197,10 @@ export default function Dashboard() {
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            Receita Líquida
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Receita Líquida</h3>
+            <Activity className="w-5 h-5 text-primary" />
+          </div>
           <p className="text-3xl font-bold">
             <GradientText>
               {dreLoading ? "..." : formatCurrency(dreData?.receitaLiquida || 0)}
@@ -194,9 +210,10 @@ export default function Dashboard() {
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            Lucro Operacional
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Lucro Operacional</h3>
+            <Target className="w-5 h-5 text-primary" />
+          </div>
           <p className="text-3xl font-bold">
             <GradientText>
               {dreLoading ? "..." : formatCurrency(dreData?.lucroOperacional || 0)}
@@ -208,8 +225,131 @@ export default function Dashboard() {
         </GlassCard>
       </div>
 
+      {/* Advanced Metrics KPIs */}
+      {metricsData && metricsData.totalSalesCount > 0 && (
+        <>
+          <div className="mt-8">
+            <h2 className="text-2xl font-semibold mb-4">
+              <GradientText>Métricas Avançadas</GradientText>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">CAC</h3>
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-3xl font-bold">
+                <GradientText>{formatCurrency(metricsData.cac)}</GradientText>
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {metricsData.newClientsCount} novos clientes
+              </p>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">LTV</h3>
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-3xl font-bold">
+                <GradientText>{formatCurrency(metricsData.ltv)}</GradientText>
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Lifetime Value
+              </p>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">LTV/CAC</h3>
+                <Target className="w-5 h-5 text-primary" />
+              </div>
+              <p className={`text-3xl font-bold ${ltvCacRatioColor}`}>
+                {metricsData.ltvCacRatio.toFixed(2)}:1
+              </p>
+              <div className="mt-2">
+                <Progress value={ltvCacProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Meta: 3:1 {metricsData.ltvCacRatio >= 3 ? "✓" : ""}
+                </p>
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">ROI</h3>
+                <DollarSign className="w-5 h-5 text-primary" />
+              </div>
+              <p className={`text-3xl font-bold ${metricsData.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {formatPercent(metricsData.roi)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Retorno sobre Investimento
+              </p>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Ticket Médio</h3>
+                <Activity className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-3xl font-bold">
+                <GradientText>{formatCurrency(metricsData.averageTicket)}</GradientText>
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {metricsData.totalSalesCount} vendas
+              </p>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Ponto de Equilíbrio</h3>
+                <Target className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-2xl font-bold">
+                <GradientText>{formatCurrency(metricsData.breakEvenPoint)}</GradientText>
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {metricsData.netRevenue > 0 
+                  ? `${((metricsData.breakEvenPoint / metricsData.netRevenue) * 100).toFixed(1)}% da receita`
+                  : "0% da receita"
+                }
+              </p>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Margem de Segurança</h3>
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <p className={`text-2xl font-bold ${metricsData.safetyMargin >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {formatCurrency(metricsData.safetyMargin)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {formatPercent(metricsData.safetyMarginPercent)} da receita
+              </p>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Clientes Ativos</h3>
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-3xl font-bold">
+                <GradientText>{metricsData.totalActiveClients}</GradientText>
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {metricsData.repeatCustomersCount} recorrentes
+              </p>
+            </GlassCard>
+          </div>
+        </>
+      )}
+
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <GlassCard className="p-6">
           <h3 className="text-xl font-semibold mb-4">
             <GradientText>Evolução do Lucro Líquido</GradientText>
@@ -251,7 +391,7 @@ export default function Dashboard() {
             <GradientText>Composição Financeira</GradientText>
           </h3>
           <div className="h-64">
-            {compositionData.length > 0 && dreData && dreData.receitaLiquida > 0 ? (
+            {compositionData.length > 0 && metricsData && metricsData.netRevenue > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -276,6 +416,7 @@ export default function Dashboard() {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                     }}
+                    formatter={(value: any) => formatCurrency(value)}
                   />
                 </PieChart>
               </ResponsiveContainer>
