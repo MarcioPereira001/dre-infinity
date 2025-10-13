@@ -187,16 +187,16 @@ export default function Settings() {
                       <div>
                         <Label htmlFor="parent">Categoria Pai (Opcional)</Label>
                         <Select
-                          value={formData.parent_id || ""}
+                          value={formData.parent_id || "none"}
                           onValueChange={(value) =>
-                            setFormData({ ...formData, parent_id: value || null })
+                            setFormData({ ...formData, parent_id: value === "none" ? null : value })
                           }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Nenhuma" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Nenhuma</SelectItem>
+                            <SelectItem value="none">Nenhuma</SelectItem>
                             {mainCategories.map((cat) => (
                               <SelectItem key={cat.id} value={cat.id}>
                                 {cat.name}
