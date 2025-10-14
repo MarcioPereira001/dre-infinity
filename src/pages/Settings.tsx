@@ -21,9 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Edit, Trash2, Users } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { PlusCircle, Edit, Trash2, Users, Percent } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { useClients } from "@/hooks/useClients";
+import { useTaxConfigurations } from "@/hooks/useTaxConfigurations";
+import { useCompany } from "@/contexts/CompanyContext";
 import {
   Table,
   TableBody,
@@ -56,10 +60,49 @@ export default function Settings() {
     tax_id: "",
   });
 
+  // Only fetch categories when not on clients or tax_av tabs
+  const shouldFetchCategories = !["clients", "tax_av"].includes(activeTab);
+  
   const { categories, loading, createCategory, updateCategory, deleteCategory } =
-    useCategories(activeTab as "revenue" | "cost" | "expense");
+    useCategories(shouldFetchCategories ? (activeTab as "revenue" | "cost" | "expense") : undefined);
 
   const { clients, loading: clientsLoading, createClient, updateClient, deleteClient } = useClients();
+  
+  const { taxConfig, loading: taxLoading, updateTaxConfiguration } = useTaxConfigurations();
+  const { company } = useCompany();
+
+  const [taxFormData, setTaxFormData] = useState({
+    icms_rate: 0,
+    ipi_rate: 0,
+    pis_rate: 0,
+    cofins_rate: 0,
+    iss_rate: 0,
+    das_rate: 0,
+    use_das: false,
+    irpj_rate: 0,
+    irpj_additional_rate: 0,
+    irpj_additional_threshold: 0,
+    csll_rate: 0,
+  });
+
+  // Update tax form when taxConfig loads
+  useState(() => {
+    if (taxConfig) {
+      setTaxFormData({
+        icms_rate: taxConfig.icms_rate,
+        ipi_rate: taxConfig.ipi_rate,
+        pis_rate: taxConfig.pis_rate,
+        cofins_rate: taxConfig.cofins_rate,
+        iss_rate: taxConfig.iss_rate,
+        das_rate: taxConfig.das_rate,
+        use_das: taxConfig.use_das,
+        irpj_rate: taxConfig.irpj_rate,
+        irpj_additional_rate: taxConfig.irpj_additional_rate,
+        irpj_additional_threshold: taxConfig.irpj_additional_threshold,
+        csll_rate: taxConfig.csll_rate,
+      });
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +176,11 @@ export default function Settings() {
     }
   };
 
+  const handleTaxSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateTaxConfiguration(taxFormData);
+  };
+
   const getCategoryTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       revenue: "Receitas",
@@ -164,6 +212,10 @@ export default function Settings() {
           <TabsTrigger value="clients">
             <Users className="w-4 h-4 mr-2" />
             Clientes
+          </TabsTrigger>
+          <TabsTrigger value="tax_av">
+            <Percent className="w-4 h-4 mr-2" />
+            % AV
           </TabsTrigger>
         </TabsList>
 
@@ -499,6 +551,295 @@ export default function Settings() {
               </Table>
             )}
           </GlassCard>
+        </TabsContent>
+
+        {/* Tax Configurations Tab */}
+        <TabsContent value="tax_av" className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-semibold mb-2">
+              <GradientText>Configuração de Alíquotas e Impostos</GradientText>
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Configure as alíquotas de impostos de acordo com o regime tributário da sua empresa.
+              Estes valores serão usados para calcular o DRE e a Análise Vertical.
+            </p>
+          </div>
+
+          {taxLoading ? (
+            <div className="text-center py-8">Carregando...</div>
+          ) : (
+            <GlassCard className="p-6">
+              <form onSubmit={handleTaxSubmit} className="space-y-6">
+                <div>
+                  <Label className="text-base font-semibold">Regime Tributário Atual</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {company?.tax_regime === 'simples_nacional' && 'Simples Nacional'}
+                    {company?.tax_regime === 'lucro_presumido' && 'Lucro Presumido'}
+                    {company?.tax_regime === 'lucro_real' && 'Lucro Real'}
+                  </p>
+                </div>
+
+                <Separator />
+
+                {company?.tax_regime === 'simples_nacional' && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base font-semibold">Usar DAS (Simples Nacional)?</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Se ativado, usará apenas a alíquota do DAS. Caso contrário, usará impostos individuais.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={taxFormData.use_das}
+                        onCheckedChange={(checked) =>
+                          setTaxFormData({ ...taxFormData, use_das: checked })
+                        }
+                      />
+                    </div>
+                    <Separator />
+                  </>
+                )}
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Impostos sobre Vendas (Deduções da Receita Bruta)
+                  </h3>
+                  
+                  {taxFormData.use_das ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="das_rate">DAS - Simples Nacional (%)</Label>
+                        <Input
+                          id="das_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={(taxFormData.das_rate * 100).toFixed(2)}
+                          onChange={(e) =>
+                            setTaxFormData({
+                              ...taxFormData,
+                              das_rate: Number(e.target.value) / 100,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Alíquota total do DAS conforme faixa de faturamento
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="icms_rate">ICMS (%)</Label>
+                        <Input
+                          id="icms_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={(taxFormData.icms_rate * 100).toFixed(2)}
+                          onChange={(e) =>
+                            setTaxFormData({
+                              ...taxFormData,
+                              icms_rate: Number(e.target.value) / 100,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Imposto estadual sobre circulação de mercadorias
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="ipi_rate">IPI (%)</Label>
+                        <Input
+                          id="ipi_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={(taxFormData.ipi_rate * 100).toFixed(2)}
+                          onChange={(e) =>
+                            setTaxFormData({
+                              ...taxFormData,
+                              ipi_rate: Number(e.target.value) / 100,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Imposto sobre produtos industrializados
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="pis_rate">PIS (%)</Label>
+                        <Input
+                          id="pis_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={(taxFormData.pis_rate * 100).toFixed(2)}
+                          onChange={(e) =>
+                            setTaxFormData({
+                              ...taxFormData,
+                              pis_rate: Number(e.target.value) / 100,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Programa de Integração Social
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="cofins_rate">COFINS (%)</Label>
+                        <Input
+                          id="cofins_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={(taxFormData.cofins_rate * 100).toFixed(2)}
+                          onChange={(e) =>
+                            setTaxFormData({
+                              ...taxFormData,
+                              cofins_rate: Number(e.target.value) / 100,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Contribuição para Financiamento da Seguridade Social
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="iss_rate">ISS (%)</Label>
+                        <Input
+                          id="iss_rate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={(taxFormData.iss_rate * 100).toFixed(2)}
+                          onChange={(e) =>
+                            setTaxFormData({
+                              ...taxFormData,
+                              iss_rate: Number(e.target.value) / 100,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Imposto municipal sobre serviços
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Impostos sobre o Lucro (após LAIR)
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="irpj_rate">IRPJ (%)</Label>
+                      <Input
+                        id="irpj_rate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={(taxFormData.irpj_rate * 100).toFixed(2)}
+                        onChange={(e) =>
+                          setTaxFormData({
+                            ...taxFormData,
+                            irpj_rate: Number(e.target.value) / 100,
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Imposto de Renda Pessoa Jurídica (base)
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="irpj_additional_rate">IRPJ Adicional (%)</Label>
+                      <Input
+                        id="irpj_additional_rate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={(taxFormData.irpj_additional_rate * 100).toFixed(2)}
+                        onChange={(e) =>
+                          setTaxFormData({
+                            ...taxFormData,
+                            irpj_additional_rate: Number(e.target.value) / 100,
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Alíquota adicional sobre lucro acima do limite
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="irpj_additional_threshold">Limite para IRPJ Adicional (R$)</Label>
+                      <Input
+                        id="irpj_additional_threshold"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={taxFormData.irpj_additional_threshold.toFixed(2)}
+                        onChange={(e) =>
+                          setTaxFormData({
+                            ...taxFormData,
+                            irpj_additional_threshold: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Lucro mensal acima deste valor paga adicional (padrão: R$ 20.000)
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="csll_rate">CSLL (%)</Label>
+                      <Input
+                        id="csll_rate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={(taxFormData.csll_rate * 100).toFixed(2)}
+                        onChange={(e) =>
+                          setTaxFormData({
+                            ...taxFormData,
+                            csll_rate: Number(e.target.value) / 100,
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Contribuição Social sobre Lucro Líquido
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-4 pt-4">
+                  <Button type="submit" variant="glow">
+                    Salvar Configurações
+                  </Button>
+                </div>
+              </form>
+            </GlassCard>
+          )}
         </TabsContent>
       </Tabs>
     </div>

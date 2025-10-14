@@ -12,6 +12,9 @@ import {
 } from "@/components/ui/select";
 import { Download } from "lucide-react";
 import { useDRE } from "@/hooks/useDRE";
+import { useCategories } from "@/hooks/useCategories";
+import { useClients } from "@/hooks/useClients";
+import { useExportDRE } from "@/hooks/useExportDRE";
 import {
   Table,
   TableBody,
@@ -26,10 +29,16 @@ export default function Reports() {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [selectedClient, setSelectedClient] = useState<string | undefined>(undefined);
 
-  const { dreData, loading } = useDRE(selectedMonth, selectedYear);
+  const { categories } = useCategories();
+  const { clients } = useClients();
+  const { dreData, loading } = useDRE(selectedMonth, selectedYear, selectedCategory, selectedClient);
+  const { exportToXLSX } = useExportDRE();
 
   const formatCurrency = (value: number) => {
+    if (!isFinite(value) || isNaN(value)) return "R$ 0,00";
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -37,6 +46,7 @@ export default function Reports() {
   };
 
   const formatPercent = (value: number) => {
+    if (!isFinite(value) || isNaN(value)) return "0.00%";
     return `${value.toFixed(2)}%`;
   };
 
@@ -57,35 +67,125 @@ export default function Reports() {
 
   const years = Array.from({ length: 10 }, (_, i) => currentDate.getFullYear() - i);
 
+  const handleExport = () => {
+    if (!dreData) return;
+    
+    const categoryName = categories.find(c => c.id === selectedCategory)?.name;
+    const clientName = clients.find(c => c.id === selectedClient)?.name;
+    
+    exportToXLSX(dreData, selectedMonth, selectedYear, { categoryName, clientName });
+  };
+
   const dreRows = dreData
     ? [
         {
-          label: "Receita Bruta",
+          label: "RECEITA BRUTA",
           value: dreData.receitaBruta,
           level: 0,
           isHeader: true,
+          bold: true,
         },
         {
-          label: "(-) Deduções e Impostos sobre Vendas",
-          value: -dreData.deducoes,
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
+          label: "(-) DEDUÇÕES DA RECEITA BRUTA",
+          value: 0,
+          level: 0,
+          isHeader: true,
+          isSubheader: true,
+        },
+        ...(dreData.use_das ? [
+          {
+            label: "DAS - Simples Nacional",
+            value: -dreData.das,
+            level: 1,
+            negative: true,
+            av: (dreData.das / dreData.receitaLiquida) * 100,
+          },
+        ] : [
+          {
+            label: "ICMS",
+            value: -dreData.icms,
+            level: 1,
+            negative: true,
+            av: (dreData.icms / dreData.receitaLiquida) * 100,
+          },
+          {
+            label: "IPI",
+            value: -dreData.ipi,
+            level: 1,
+            negative: true,
+            av: (dreData.ipi / dreData.receitaLiquida) * 100,
+          },
+          {
+            label: "PIS",
+            value: -dreData.pis,
+            level: 1,
+            negative: true,
+            av: (dreData.pis / dreData.receitaLiquida) * 100,
+          },
+          {
+            label: "COFINS",
+            value: -dreData.cofins,
+            level: 1,
+            negative: true,
+            av: (dreData.cofins / dreData.receitaLiquida) * 100,
+          },
+          {
+            label: "ISS",
+            value: -dreData.iss,
+            level: 1,
+            negative: true,
+            av: (dreData.iss / dreData.receitaLiquida) * 100,
+          },
+        ]),
+        {
+          label: "Total de Deduções",
+          value: -dreData.deducoesTotal,
           level: 1,
           negative: true,
+          bold: true,
+          av: dreData.avDeducoes,
         },
         {
-          label: "= Receita Operacional Líquida",
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
+          label: "= RECEITA OPERACIONAL LÍQUIDA",
           value: dreData.receitaLiquida,
           level: 0,
           isHeader: true,
           highlight: true,
+          av: 100,
+        },
+        {
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
         },
         {
           label: "(-) CMV/CSV",
           value: -dreData.cmv,
           level: 1,
           negative: true,
+          av: dreData.avCmv,
         },
         {
-          label: "= Lucro Bruto",
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
+          label: "= LUCRO BRUTO",
           value: dreData.lucroBruto,
           level: 0,
           isHeader: true,
@@ -93,13 +193,26 @@ export default function Reports() {
           margin: dreData.margemBruta,
         },
         {
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
           label: "(-) Despesas Operacionais",
           value: -dreData.despesasOperacionais,
           level: 1,
           negative: true,
+          av: dreData.avDespesasOperacionais,
         },
         {
-          label: "= Lucro Operacional (EBIT)",
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
+          label: "= LUCRO OPERACIONAL (EBIT)",
           value: dreData.lucroOperacional,
           level: 0,
           isHeader: true,
@@ -107,31 +220,88 @@ export default function Reports() {
           margin: dreData.margemOperacional,
         },
         {
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
           label: "(-) Despesas Financeiras",
           value: -dreData.despesasFinanceiras,
           level: 1,
           negative: true,
+          av: dreData.avDespesasFinanceiras,
         },
         {
           label: "(+) Receitas Financeiras",
           value: dreData.receitasFinanceiras,
           level: 1,
+          av: dreData.avReceitasFinanceiras,
         },
         {
-          label: "= LAIR",
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
+          label: "= LAIR (Lucro Antes de Impostos sobre Lucro)",
           value: dreData.lair,
           level: 0,
           isHeader: true,
           highlight: true,
+          av: (dreData.lair / dreData.receitaLiquida) * 100,
         },
         {
-          label: "(-) Impostos sobre o Lucro",
-          value: -dreData.impostos,
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
+          label: "(-) IMPOSTOS SOBRE O LUCRO",
+          value: 0,
+          level: 0,
+          isHeader: true,
+          isSubheader: true,
+        },
+        {
+          label: "IRPJ",
+          value: -dreData.irpj,
           level: 1,
           negative: true,
+          av: (dreData.irpj / dreData.receitaLiquida) * 100,
         },
         {
-          label: "= Lucro Líquido do Exercício",
+          label: "IRPJ Adicional",
+          value: -dreData.irpjAdicional,
+          level: 1,
+          negative: true,
+          av: (dreData.irpjAdicional / dreData.receitaLiquida) * 100,
+        },
+        {
+          label: "CSLL",
+          value: -dreData.csll,
+          level: 1,
+          negative: true,
+          av: (dreData.csll / dreData.receitaLiquida) * 100,
+        },
+        {
+          label: "Total de Impostos sobre Lucro",
+          value: -dreData.impostosTotal,
+          level: 1,
+          negative: true,
+          bold: true,
+          av: dreData.avImpostos,
+        },
+        {
+          label: "",
+          value: 0,
+          level: 0,
+          isHeader: false,
+        },
+        {
+          label: "= LUCRO LÍQUIDO DO EXERCÍCIO",
           value: dreData.lucroLiquido,
           level: 0,
           isHeader: true,
@@ -153,8 +323,8 @@ export default function Reports() {
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-end">
-        <div className="w-full md:w-64">
+      <div className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
+        <div className="w-full md:w-48">
           <Label>Mês</Label>
           <Select
             value={selectedMonth.toString()}
@@ -173,7 +343,7 @@ export default function Reports() {
           </Select>
         </div>
 
-        <div className="w-full md:w-40">
+        <div className="w-full md:w-32">
           <Label>Ano</Label>
           <Select
             value={selectedYear.toString()}
@@ -192,7 +362,52 @@ export default function Reports() {
           </Select>
         </div>
 
-        <Button variant="glow" className="ml-auto">
+        <div className="w-full md:w-56">
+          <Label>Categoria</Label>
+          <Select 
+            value={selectedCategory || "all"} 
+            onValueChange={(value) => setSelectedCategory(value === "all" ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full md:w-56">
+          <Label>Cliente</Label>
+          <Select 
+            value={selectedClient || "all"} 
+            onValueChange={(value) => setSelectedClient(value === "all" ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button 
+          variant="glow" 
+          className="ml-auto"
+          onClick={handleExport}
+          disabled={!dreData}
+        >
           <Download className="mr-2 h-4 w-4" />
           Exportar XLSX
         </Button>
@@ -229,7 +444,8 @@ export default function Reports() {
                   <TableCell
                     className={cn(
                       row.level === 1 && "pl-8",
-                      row.isHeader && "font-semibold"
+                      row.isHeader && "font-semibold",
+                      row.bold && "font-bold"
                     )}
                   >
                     {row.label}
@@ -244,14 +460,14 @@ export default function Reports() {
                         : ""
                     )}
                   >
-                    {formatCurrency(Math.abs(row.value))}
+                    {row.label ? formatCurrency(Math.abs(row.value)) : ""}
                   </TableCell>
                   <TableCell className="text-right">
-                    {row.margin !== undefined
+                    {row.av !== undefined
+                      ? formatPercent(row.av)
+                      : row.margin !== undefined
                       ? formatPercent(row.margin)
-                      : dreData.receitaLiquida > 0
-                      ? formatPercent((row.value / dreData.receitaLiquida) * 100)
-                      : "-"}
+                      : ""}
                   </TableCell>
                 </TableRow>
               ))}

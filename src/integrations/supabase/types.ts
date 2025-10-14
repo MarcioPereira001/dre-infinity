@@ -246,6 +246,71 @@ export type Database = {
           },
         ]
       }
+      tax_configurations: {
+        Row: {
+          cofins_rate: number | null
+          company_id: string
+          created_at: string | null
+          csll_rate: number | null
+          das_rate: number | null
+          icms_rate: number | null
+          id: string
+          ipi_rate: number | null
+          irpj_additional_rate: number | null
+          irpj_additional_threshold: number | null
+          irpj_rate: number | null
+          iss_rate: number | null
+          last_updated: string | null
+          pis_rate: number | null
+          regime_type: string | null
+          use_das: boolean | null
+        }
+        Insert: {
+          cofins_rate?: number | null
+          company_id: string
+          created_at?: string | null
+          csll_rate?: number | null
+          das_rate?: number | null
+          icms_rate?: number | null
+          id?: string
+          ipi_rate?: number | null
+          irpj_additional_rate?: number | null
+          irpj_additional_threshold?: number | null
+          irpj_rate?: number | null
+          iss_rate?: number | null
+          last_updated?: string | null
+          pis_rate?: number | null
+          regime_type?: string | null
+          use_das?: boolean | null
+        }
+        Update: {
+          cofins_rate?: number | null
+          company_id?: string
+          created_at?: string | null
+          csll_rate?: number | null
+          das_rate?: number | null
+          icms_rate?: number | null
+          id?: string
+          ipi_rate?: number | null
+          irpj_additional_rate?: number | null
+          irpj_additional_threshold?: number | null
+          irpj_rate?: number | null
+          iss_rate?: number | null
+          last_updated?: string | null
+          pis_rate?: number | null
+          regime_type?: string | null
+          use_das?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_configurations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
@@ -260,6 +325,7 @@ export type Database = {
           is_new_client: boolean | null
           is_sales_cost: boolean | null
           month: number
+          tax_breakdown: Json | null
           transaction_date: string
           transaction_type: string | null
           updated_at: string
@@ -278,6 +344,7 @@ export type Database = {
           is_new_client?: boolean | null
           is_sales_cost?: boolean | null
           month: number
+          tax_breakdown?: Json | null
           transaction_date: string
           transaction_type?: string | null
           updated_at?: string
@@ -296,6 +363,7 @@ export type Database = {
           is_new_client?: boolean | null
           is_sales_cost?: boolean | null
           month?: number
+          tax_breakdown?: Json | null
           transaction_date?: string
           transaction_type?: string | null
           updated_at?: string
