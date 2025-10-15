@@ -14,6 +14,9 @@ import CompanySetup from "./pages/CompanySetup";
 import Settings from "./pages/Settings";
 import Transactions from "./pages/Transactions";
 import Reports from "./pages/Reports";
+import BreakEven from "./pages/BreakEven";
+import Goals from "./pages/Goals";
+import Scenarios from "./pages/Scenarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +76,36 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <Reports />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/break-even"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <BreakEven />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/goals"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Goals />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/scenarios"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Scenarios />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

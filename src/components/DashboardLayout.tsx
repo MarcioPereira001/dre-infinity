@@ -14,6 +14,9 @@ import {
   X,
   Building2,
   PlusCircle,
+  Target,
+  Calculator,
+  Activity,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -39,6 +42,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: FileText, label: "Lançamentos", path: "/transactions" },
     { icon: TrendingUp, label: "Relatórios DRE", path: "/reports" },
+    { icon: Activity, label: "Ponto de Equilíbrio", path: "/break-even" },
+    { icon: Target, label: "Metas e Orçamento", path: "/goals" },
+    { icon: Calculator, label: "Cenários", path: "/scenarios" },
     { icon: Settings, label: "Configurações", path: "/settings" },
   ];
 
