@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDRE } from "@/hooks/useDRE";
+import { useGoals } from "@/hooks/useGoals";
 import { Target, TrendingUp, TrendingDown } from "lucide-react";
 import {
   Table,
@@ -28,8 +29,11 @@ export default function Goals() {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  // Metas (em um sistema real, isso viria de um banco de dados)
-  const [goals, setGoals] = useState({
+  const { dreData, loading } = useDRE(selectedMonth, selectedYear);
+  const { getGoalByMetric, upsertGoal, loading: goalsLoading } = useGoals(selectedMonth, selectedYear);
+  
+  // Get goals from database or use defaults
+  const [localGoals, setLocalGoals] = useState({
     receitaBruta: 100000,
     receitaLiquida: 80000,
     lucroBruto: 50000,
@@ -37,7 +41,14 @@ export default function Goals() {
     lucroLiquido: 20000,
   });
 
-  const { dreData, loading } = useDRE(selectedMonth, selectedYear);
+  // Update local goals with database values when available
+  const goals = {
+    receitaBruta: getGoalByMetric("receita_bruta") || localGoals.receitaBruta,
+    receitaLiquida: getGoalByMetric("receita_liquida") || localGoals.receitaLiquida,
+    lucroBruto: getGoalByMetric("lucro_bruto") || localGoals.lucroBruto,
+    lucroOperacional: getGoalByMetric("lucro_operacional") || localGoals.lucroOperacional,
+    lucroLiquido: getGoalByMetric("lucro_liquido") || localGoals.lucroLiquido,
+  };
 
   const formatCurrency = (value: number) => {
     if (!isFinite(value) || isNaN(value)) return "R$ 0,00";
@@ -171,7 +182,7 @@ export default function Goals() {
               type="number"
               step="0.01"
               value={goals.receitaBruta}
-              onChange={(e) => setGoals({ ...goals, receitaBruta: Number(e.target.value) })}
+              onChange={(e) => setLocalGoals({ ...localGoals, receitaBruta: Number(e.target.value) })}
             />
           </div>
           <div>
@@ -181,7 +192,7 @@ export default function Goals() {
               type="number"
               step="0.01"
               value={goals.receitaLiquida}
-              onChange={(e) => setGoals({ ...goals, receitaLiquida: Number(e.target.value) })}
+              onChange={(e) => setLocalGoals({ ...localGoals, receitaLiquida: Number(e.target.value) })}
             />
           </div>
           <div>
@@ -191,7 +202,7 @@ export default function Goals() {
               type="number"
               step="0.01"
               value={goals.lucroBruto}
-              onChange={(e) => setGoals({ ...goals, lucroBruto: Number(e.target.value) })}
+              onChange={(e) => setLocalGoals({ ...localGoals, lucroBruto: Number(e.target.value) })}
             />
           </div>
           <div>
@@ -201,7 +212,7 @@ export default function Goals() {
               type="number"
               step="0.01"
               value={goals.lucroOperacional}
-              onChange={(e) => setGoals({ ...goals, lucroOperacional: Number(e.target.value) })}
+              onChange={(e) => setLocalGoals({ ...localGoals, lucroOperacional: Number(e.target.value) })}
             />
           </div>
           <div>
@@ -211,13 +222,24 @@ export default function Goals() {
               type="number"
               step="0.01"
               value={goals.lucroLiquido}
-              onChange={(e) => setGoals({ ...goals, lucroLiquido: Number(e.target.value) })}
+              onChange={(e) => setLocalGoals({ ...localGoals, lucroLiquido: Number(e.target.value) })}
             />
           </div>
           <div className="flex items-end">
-            <Button variant="glow" className="w-full">
+            <Button 
+              variant="glow" 
+              className="w-full"
+              onClick={async () => {
+                await upsertGoal("receita_bruta", localGoals.receitaBruta);
+                await upsertGoal("receita_liquida", localGoals.receitaLiquida);
+                await upsertGoal("lucro_bruto", localGoals.lucroBruto);
+                await upsertGoal("lucro_operacional", localGoals.lucroOperacional);
+                await upsertGoal("lucro_liquido", localGoals.lucroLiquido);
+              }}
+              disabled={goalsLoading}
+            >
               <Target className="mr-2 h-4 w-4" />
-              Salvar Metas
+              {goalsLoading ? "Salvando..." : "Salvar Metas"}
             </Button>
           </div>
         </div>

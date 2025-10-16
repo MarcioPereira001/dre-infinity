@@ -17,6 +17,7 @@ import {
   Target,
   Calculator,
   Activity,
+  Users,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +46,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Activity, label: "Ponto de Equilíbrio", path: "/break-even" },
     { icon: Target, label: "Metas e Orçamento", path: "/goals" },
     { icon: Calculator, label: "Cenários", path: "/scenarios" },
+    { icon: Users, label: "Usuários", path: "/users" },
     { icon: Settings, label: "Configurações", path: "/settings" },
   ];
 

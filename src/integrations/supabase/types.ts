@@ -154,6 +154,39 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          metric_name: string
+          period_month: number
+          period_year: number
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          metric_name: string
+          period_month: number
+          period_year: number
+          target_value?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          metric_name?: string
+          period_month?: number
+          period_year?: number
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       metrics_cache: {
         Row: {
           average_ticket: number | null
@@ -419,6 +452,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_and_cache_metrics: {
+        Args: { p_company_id: string; p_month: number; p_year: number }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

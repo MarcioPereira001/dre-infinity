@@ -5,6 +5,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { useEffect, useState } from "react";
 import { useDRE } from "@/hooks/useDRE";
 import { useMetrics } from "@/hooks/useMetrics";
+import { useMetricsCache } from "@/hooks/useMetricsCache";
 import {
   Select,
   SelectContent,
@@ -40,7 +41,10 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const { dreData, loading: dreLoading } = useDRE(selectedMonth, selectedYear);
-  const { metricsData, loading: metricsLoading } = useMetrics(selectedMonth, selectedYear);
+  const { metricsCache, loading: metricsLoading } = useMetricsCache(selectedMonth, selectedYear);
+  
+  // Use metrics_cache if available, fallback to useMetrics hook
+  const metricsData = metricsCache || useMetrics(selectedMonth, selectedYear).metricsData;
 
   useEffect(() => {
     if (!companyLoading && companies.length === 0) {

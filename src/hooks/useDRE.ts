@@ -46,6 +46,18 @@ interface DREData {
   avDespesasFinanceiras: number;
   avReceitasFinanceiras: number;
   avImpostos: number;
+  
+  // Análise Horizontal (% variação em relação ao período anterior)
+  horizontalAnalysis?: {
+    receitaBruta: number;
+    receitaLiquida: number;
+    cmv: number;
+    lucroBruto: number;
+    despesasOperacionais: number;
+    lucroOperacional: number;
+    lair: number;
+    lucroLiquido: number;
+  };
 }
 
 export function useDRE(
@@ -302,6 +314,18 @@ export function useDRE(
         avImpostos: 0,
       });
 
+      // Calcular Análise Horizontal
+      const horizontalAnalysis = previousDreData ? {
+        receitaBruta: prevReceitaBruta > 0 ? ((receitaBruta - prevReceitaBruta) / prevReceitaBruta) * 100 : 0,
+        receitaLiquida: prevReceitaLiquida > 0 ? ((receitaLiquida - prevReceitaLiquida) / prevReceitaLiquida) * 100 : 0,
+        cmv: prevCmv > 0 ? ((cmv - prevCmv) / prevCmv) * 100 : 0,
+        lucroBruto: prevLucroBruto > 0 ? ((lucroBruto - prevLucroBruto) / prevLucroBruto) * 100 : 0,
+        despesasOperacionais: prevDespesasOperacionais > 0 ? ((despesasOperacionais - prevDespesasOperacionais) / prevDespesasOperacionais) * 100 : 0,
+        lucroOperacional: prevLucroOperacional > 0 ? ((lucroOperacional - prevLucroOperacional) / prevLucroOperacional) * 100 : 0,
+        lair: prevLAIR > 0 ? ((lair - prevLAIR) / prevLAIR) * 100 : 0,
+        lucroLiquido: prevLucroLiquido > 0 ? ((lucroLiquido - prevLucroLiquido) / prevLucroLiquido) * 100 : 0,
+      } : undefined;
+
       setDreData({
         receitaBruta,
         icms,
@@ -334,6 +358,7 @@ export function useDRE(
         avDespesasFinanceiras,
         avReceitasFinanceiras,
         avImpostos,
+        horizontalAnalysis,
       });
     } catch (error: any) {
       toast({

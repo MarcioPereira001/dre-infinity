@@ -84,6 +84,7 @@ export default function Reports() {
           level: 0,
           isHeader: true,
           bold: true,
+          ah: dreData.horizontalAnalysis?.receitaBruta,
         },
         {
           label: "",
@@ -426,9 +427,10 @@ export default function Reports() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[60%]">Conta</TableHead>
+                <TableHead className="w-[50%]">Conta</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
                 <TableHead className="text-right">% AV</TableHead>
+                <TableHead className="text-right">% AH</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -468,6 +470,21 @@ export default function Reports() {
                       : row.margin !== undefined
                       ? formatPercent(row.margin)
                       : ""}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {row.ah !== undefined ? (
+                      <span
+                        className={cn(
+                          "font-medium",
+                          row.ah > 0 ? "text-green-500" : row.ah < 0 ? "text-red-500" : ""
+                        )}
+                      >
+                        {row.ah > 0 ? "+" : ""}
+                        {formatPercent(row.ah)}
+                      </span>
+                    ) : (
+                      ""
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
