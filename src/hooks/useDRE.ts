@@ -217,13 +217,22 @@ export function useDRE(
       let prevReceitaBruta = 0;
       let prevCmv = 0;
       let prevDespesasOperacionais = 0;
+      let prevDespesasFinanceiras = 0;
+      let prevReceitasFinanceiras = 0;
 
       previousTransactions?.forEach((t: any) => {
         const amount = Number(t.amount);
         const categoryType = t.category?.category_type;
         if (categoryType === "revenue") prevReceitaBruta += amount;
         else if (categoryType === "cost") prevCmv += amount;
-        else if (categoryType === "expense") prevDespesasOperacionais += amount;
+        else if (categoryType === "expense") {
+          const categoryName = t.category?.name?.toLowerCase() || "";
+          if (categoryName.includes("financeira")) {
+            prevDespesasFinanceiras += amount;
+          } else {
+            prevDespesasOperacionais += amount;
+          }
+        }
       });
 
       let prevDeducoesTotal = 0;
@@ -292,65 +301,6 @@ export function useDRE(
         avReceitasFinanceiras: 0,
         avImpostos: 0,
       });
-
-      // Calcular deduções baseadas nas configurações de impostos
-      let icms = 0;
-      let ipi = 0;
-      let pis = 0;
-      let cofins = 0;
-      let iss = 0;
-      let das = 0;
-      let deducoesTotal = 0;
-      const use_das = taxConfig?.use_das || false;
-
-      if (use_das) {
-        das = receitaBruta * (taxConfig?.das_rate || 0.06);
-        deducoesTotal = das;
-      } else {
-        icms = receitaBruta * (taxConfig?.icms_rate || 0.18);
-        ipi = receitaBruta * (taxConfig?.ipi_rate || 0.10);
-        pis = receitaBruta * (taxConfig?.pis_rate || 0.0165);
-        cofins = receitaBruta * (taxConfig?.cofins_rate || 0.076);
-        iss = receitaBruta * (taxConfig?.iss_rate || 0.05);
-        deducoesTotal = icms + ipi + pis + cofins + iss;
-      }
-
-      const receitaLiquida = receitaBruta - deducoesTotal;
-      const lucroBruto = receitaLiquida - cmv;
-      const lucroOperacional = lucroBruto - despesasOperacionais;
-      const lair = lucroOperacional + receitasFinanceiras - despesasFinanceiras;
-
-      // Calcular impostos sobre lucro
-      let irpj = 0;
-      let irpjAdicional = 0;
-      let csll = 0;
-
-      if (lair > 0) {
-        irpj = lair * (taxConfig?.irpj_rate || 0.15);
-        
-        const threshold = taxConfig?.irpj_additional_threshold || 20000;
-        if (lair > threshold) {
-          irpjAdicional = (lair - threshold) * (taxConfig?.irpj_additional_rate || 0.10);
-        }
-        
-        csll = lair * (taxConfig?.csll_rate || 0.09);
-      }
-
-      const impostosTotal = irpj + irpjAdicional + csll;
-      const lucroLiquido = lair - impostosTotal;
-
-      // Calcular margens
-      const margemBruta = receitaLiquida > 0 ? (lucroBruto / receitaLiquida) * 100 : 0;
-      const margemOperacional = receitaLiquida > 0 ? (lucroOperacional / receitaLiquida) * 100 : 0;
-      const margemLiquida = receitaLiquida > 0 ? (lucroLiquido / receitaLiquida) * 100 : 0;
-
-      // Calcular Análise Vertical (% AV)
-      const avDeducoes = receitaLiquida > 0 ? (deducoesTotal / receitaLiquida) * 100 : 0;
-      const avCmv = receitaLiquida > 0 ? (cmv / receitaLiquida) * 100 : 0;
-      const avDespesasOperacionais = receitaLiquida > 0 ? (despesasOperacionais / receitaLiquida) * 100 : 0;
-      const avDespesasFinanceiras = receitaLiquida > 0 ? (despesasFinanceiras / receitaLiquida) * 100 : 0;
-      const avReceitasFinanceiras = receitaLiquida > 0 ? (receitasFinanceiras / receitaLiquida) * 100 : 0;
-      const avImpostos = receitaLiquida > 0 ? (impostosTotal / receitaLiquida) * 100 : 0;
 
       setDreData({
         receitaBruta,
