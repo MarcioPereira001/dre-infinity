@@ -102,9 +102,11 @@ export function useMetrics(month?: number, year?: number) {
           // Marketing e Vendas
           if (t.is_marketing_cost) {
             marketingCosts += amount;
+            console.log(`✅ Custo de Marketing adicionado: R$ ${amount} - ${t.description}`);
           }
           if (t.is_sales_cost) {
             salesCosts += amount;
+            console.log(`✅ Custo de Vendas adicionado: R$ ${amount} - ${t.description}`);
           }
 
           // Classificação Fixo/Variável
@@ -145,6 +147,8 @@ export function useMetrics(month?: number, year?: number) {
       const cac = newClientsCount > 0 
         ? (marketingCosts + salesCosts) / newClientsCount 
         : 0;
+
+      console.log(`📊 CAC Calculado: R$ ${cac.toFixed(2)} | Marketing: R$ ${marketingCosts} + Vendas: R$ ${salesCosts} = R$ ${marketingCosts + salesCosts} / ${newClientsCount} novos clientes`);
 
       // 2. Ticket Médio
       const averageTicket = totalSalesCount > 0 
