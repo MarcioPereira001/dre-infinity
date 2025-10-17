@@ -2,11 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { useCompany } from "@/contexts/CompanyContext";
 import { GradientText } from "@/components/GradientText";
 import { GlassCard } from "@/components/GlassCard";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDRE } from "@/hooks/useDRE";
 import { useMetrics } from "@/hooks/useMetrics";
 import { useMetricsCache } from "@/hooks/useMetricsCache";
 import { useHistoricalDRE } from "@/hooks/useHistoricalDRE";
+import { useGoals } from "@/hooks/useGoals";
 import {
   Select,
   SelectContent,
@@ -31,7 +32,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, Users, Target, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Users, Target, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { RevenueCompositionFunnel } from "@/components/dashboard/RevenueCompositionFunnel";
+import { KPIEvolutionCharts } from "@/components/dashboard/KPIEvolutionCharts";
+import { GoalProgressIndicator } from "@/components/dashboard/GoalProgressIndicator";
 
 export default function Dashboard() {
   const { company, companies, loading: companyLoading } = useCompany();
@@ -40,13 +44,45 @@ export default function Dashboard() {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [comparisonType, setComparisonType] = useState<"none" | "previous-month" | "same-period-last-year">("none");
 
   const { dreData, loading: dreLoading } = useDRE(selectedMonth, selectedYear);
   const { metricsCache, loading: metricsLoading } = useMetricsCache(selectedMonth, selectedYear);
   const { data: historicalData, loading: historicalLoading } = useHistoricalDRE(12);
+  const { goals, loading: goalsLoading } = useGoals(selectedMonth, selectedYear);
   
   // Use metrics_cache if available, fallback to useMetrics hook
   const metricsData = metricsCache || useMetrics(selectedMonth, selectedYear).metricsData;
+
+  // Comparison data
+  const comparisonMonth = comparisonType === "previous-month" 
+    ? selectedMonth === 1 ? 12 : selectedMonth - 1
+    : selectedMonth;
+  const comparisonYear = comparisonType === "previous-month" && selectedMonth === 1
+    ? selectedYear - 1
+    : comparisonType === "same-period-last-year"
+    ? selectedYear - 1
+    : selectedYear;
+
+  const { dreData: comparisonDreData } = useDRE(
+    comparisonType !== "none" ? comparisonMonth : selectedMonth,
+    comparisonType !== "none" ? comparisonYear : selectedYear
+  );
+
+  const { metricsCache: comparisonMetrics } = useMetricsCache(
+    comparisonType !== "none" ? comparisonMonth : selectedMonth,
+    comparisonType !== "none" ? comparisonYear : selectedYear
+  );
+
+  // Historical metrics for evolution charts
+  const historicalMetrics = useMemo(() => {
+    return historicalData.map((item) => ({
+      month: item.month,
+      cac: item.cac || 0,
+      ltv: item.ltv || 0,
+      ltvCacRatio: item.ltvCacRatio || 0,
+    }));
+  }, [historicalData]);
 
   useEffect(() => {
     if (!companyLoading && companies.length === 0) {
@@ -73,6 +109,16 @@ export default function Dashboard() {
   const formatPercent = (value: number) => {
     if (!isFinite(value) || isNaN(value)) return "0.00%";
     return `${value.toFixed(2)}%`;
+  };
+
+  const calculateVariation = (current: number, comparison: number) => {
+    if (!comparison || comparison === 0) return 0;
+    return ((current - comparison) / comparison) * 100;
+  };
+
+  const getGoalValue = (metricName: string): number | null => {
+    const goal = goals.find((g) => g.metric_name === metricName);
+    return goal ? Number(goal.target_value) : null;
   };
 
   const months = [
@@ -164,12 +210,29 @@ export default function Dashboard() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="w-full sm:w-56">
+            <Label>Comparar com</Label>
+            <Select
+              value={comparisonType}
+              onValueChange={(value: any) => setComparisonType(value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem comparação</SelectItem>
+                <SelectItem value="previous-month">Mês Anterior</SelectItem>
+                <SelectItem value="same-period-last-year">Mesmo Período Ano Anterior</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* DRE KPIs Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <GlassCard className="p-4 sm:p-6">
+        <GlassCard className="p-4 sm:p-6 relative overflow-hidden hover:shadow-glow-primary transition-all duration-300">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Lucro Líquido</h3>
             <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -182,9 +245,27 @@ export default function Dashboard() {
           <p className="text-xs text-muted-foreground mt-2">
             Margem: {dreLoading ? "..." : formatPercent(dreData?.margemLiquida || 0)}
           </p>
+          {comparisonType !== "none" && comparisonDreData && (
+            <div className="mt-2 flex items-center gap-1 text-xs">
+              {calculateVariation(dreData?.lucroLiquido || 0, comparisonDreData.lucroLiquido) >= 0 ? (
+                <ArrowUpRight className="w-3 h-3 text-primary" />
+              ) : (
+                <ArrowDownRight className="w-3 h-3 text-destructive" />
+              )}
+              <span className={calculateVariation(dreData?.lucroLiquido || 0, comparisonDreData.lucroLiquido) >= 0 ? "text-primary" : "text-destructive"}>
+                {formatPercent(Math.abs(calculateVariation(dreData?.lucroLiquido || 0, comparisonDreData.lucroLiquido)))}
+              </span>
+            </div>
+          )}
+          <GoalProgressIndicator
+            currentValue={dreData?.lucroLiquido || 0}
+            targetValue={getGoalValue("lucro_liquido")}
+            label="Lucro Líquido"
+            formatValue={formatCurrency}
+          />
         </GlassCard>
 
-        <GlassCard className="p-4 sm:p-6">
+        <GlassCard className="p-4 sm:p-6 relative overflow-hidden hover:shadow-glow-primary transition-all duration-300">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Lucro Bruto</h3>
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -197,9 +278,21 @@ export default function Dashboard() {
           <p className="text-xs text-muted-foreground mt-2">
             Margem: {dreLoading ? "..." : formatPercent(dreData?.margemBruta || 0)}
           </p>
+          {comparisonType !== "none" && comparisonDreData && (
+            <div className="mt-2 flex items-center gap-1 text-xs">
+              {calculateVariation(dreData?.lucroBruto || 0, comparisonDreData.lucroBruto) >= 0 ? (
+                <ArrowUpRight className="w-3 h-3 text-primary" />
+              ) : (
+                <ArrowDownRight className="w-3 h-3 text-destructive" />
+              )}
+              <span className={calculateVariation(dreData?.lucroBruto || 0, comparisonDreData.lucroBruto) >= 0 ? "text-primary" : "text-destructive"}>
+                {formatPercent(Math.abs(calculateVariation(dreData?.lucroBruto || 0, comparisonDreData.lucroBruto)))}
+              </span>
+            </div>
+          )}
         </GlassCard>
 
-        <GlassCard className="p-4 sm:p-6">
+        <GlassCard className="p-4 sm:p-6 relative overflow-hidden hover:shadow-glow-secondary transition-all duration-300">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Receita Líquida</h3>
             <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -210,9 +303,27 @@ export default function Dashboard() {
             </GradientText>
           </p>
           <p className="text-xs text-muted-foreground mt-2">Mês selecionado</p>
+          {comparisonType !== "none" && comparisonDreData && (
+            <div className="mt-2 flex items-center gap-1 text-xs">
+              {calculateVariation(dreData?.receitaLiquida || 0, comparisonDreData.receitaLiquida) >= 0 ? (
+                <ArrowUpRight className="w-3 h-3 text-primary" />
+              ) : (
+                <ArrowDownRight className="w-3 h-3 text-destructive" />
+              )}
+              <span className={calculateVariation(dreData?.receitaLiquida || 0, comparisonDreData.receitaLiquida) >= 0 ? "text-primary" : "text-destructive"}>
+                {formatPercent(Math.abs(calculateVariation(dreData?.receitaLiquida || 0, comparisonDreData.receitaLiquida)))}
+              </span>
+            </div>
+          )}
+          <GoalProgressIndicator
+            currentValue={dreData?.receitaLiquida || 0}
+            targetValue={getGoalValue("receita_liquida")}
+            label="Receita Líquida"
+            formatValue={formatCurrency}
+          />
         </GlassCard>
 
-        <GlassCard className="p-4 sm:p-6">
+        <GlassCard className="p-4 sm:p-6 relative overflow-hidden hover:shadow-glow-secondary transition-all duration-300">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Lucro Operacional</h3>
             <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -225,6 +336,18 @@ export default function Dashboard() {
           <p className="text-xs text-muted-foreground mt-2">
             Margem: {dreLoading ? "..." : formatPercent(dreData?.margemOperacional || 0)}
           </p>
+          {comparisonType !== "none" && comparisonDreData && (
+            <div className="mt-2 flex items-center gap-1 text-xs">
+              {calculateVariation(dreData?.lucroOperacional || 0, comparisonDreData.lucroOperacional) >= 0 ? (
+                <ArrowUpRight className="w-3 h-3 text-primary" />
+              ) : (
+                <ArrowDownRight className="w-3 h-3 text-destructive" />
+              )}
+              <span className={calculateVariation(dreData?.lucroOperacional || 0, comparisonDreData.lucroOperacional) >= 0 ? "text-primary" : "text-destructive"}>
+                {formatPercent(Math.abs(calculateVariation(dreData?.lucroOperacional || 0, comparisonDreData.lucroOperacional)))}
+              </span>
+            </div>
+          )}
         </GlassCard>
       </div>
 
@@ -353,7 +476,22 @@ export default function Dashboard() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 hover:shadow-glow-primary transition-all duration-300">
+          <h3 className="text-xl font-semibold mb-4">
+            <GradientText>Funil de Composição da Receita</GradientText>
+          </h3>
+          <div className="h-80">
+            {dreData && dreData.receitaBruta > 0 ? (
+              <RevenueCompositionFunnel dreData={dreData} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                Adicione lançamentos para visualizar o funil
+              </div>
+            )}
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-6 hover:shadow-glow-primary transition-all duration-300">
           <h3 className="text-xl font-semibold mb-4">
             <GradientText>Evolução do Lucro Líquido</GradientText>
           </h3>
@@ -393,7 +531,7 @@ export default function Dashboard() {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 hover:shadow-glow-secondary transition-all duration-300">
           <h3 className="text-xl font-semibold mb-4">
             <GradientText>Composição Financeira</GradientText>
           </h3>
@@ -434,6 +572,29 @@ export default function Dashboard() {
             )}
           </div>
         </GlassCard>
+
+        {/* Evolução CAC e LTV */}
+        {historicalMetrics.length > 0 && metricsData && metricsData.totalSalesCount > 0 && (
+          <>
+            <GlassCard className="p-6 hover:shadow-glow-secondary transition-all duration-300">
+              <h3 className="text-xl font-semibold mb-4">
+                <GradientText>Evolução CAC e LTV</GradientText>
+              </h3>
+              <div className="h-64">
+                <KPIEvolutionCharts historicalMetrics={historicalMetrics} type="cac-ltv" />
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-6 hover:shadow-glow-primary transition-all duration-300">
+              <h3 className="text-xl font-semibold mb-4">
+                <GradientText>Relação LTV/CAC</GradientText>
+              </h3>
+              <div className="h-64">
+                <KPIEvolutionCharts historicalMetrics={historicalMetrics} type="ltv-cac-ratio" />
+              </div>
+            </GlassCard>
+          </>
+        )}
       </div>
     </div>
   );

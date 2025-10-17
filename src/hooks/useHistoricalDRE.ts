@@ -9,6 +9,9 @@ interface MonthlyData {
   receitaLiquida: number;
   year: number;
   monthNum: number;
+  cac: number;
+  ltv: number;
+  ltvCacRatio: number;
 }
 
 export function useHistoricalDRE(months: number = 12) {
@@ -95,6 +98,12 @@ export function useHistoricalDRE(months: number = 12) {
         const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         const historicalData: MonthlyData[] = [];
 
+        // Also fetch metrics_cache for CAC/LTV data
+        const { data: metricsData } = await supabase
+          .from("metrics_cache")
+          .select("*")
+          .eq("company_id", company.id);
+
         monthlyMap.forEach((monthData, key) => {
           const { receitaBruta, cmv, despesasOperacionais, despesasFinanceiras, receitasFinanceiras, year, month } = monthData;
 
@@ -136,6 +145,11 @@ export function useHistoricalDRE(months: number = 12) {
           const lucroLiquido = lair - impostosTotal;
           const margemLiquida = receitaLiquida > 0 ? (lucroLiquido / receitaLiquida) * 100 : 0;
 
+          // Find metrics for this month
+          const metrics = metricsData?.find(
+            (m: any) => m.period_month === month && m.period_year === year
+          );
+
           historicalData.push({
             month: monthNames[month - 1],
             lucroLiquido,
@@ -143,6 +157,9 @@ export function useHistoricalDRE(months: number = 12) {
             receitaLiquida,
             year,
             monthNum: month,
+            cac: metrics?.cac ? Number(metrics.cac) : 0,
+            ltv: metrics?.ltv ? Number(metrics.ltv) : 0,
+            ltvCacRatio: metrics?.ltv_cac_ratio ? Number(metrics.ltv_cac_ratio) : 0,
           });
         });
 

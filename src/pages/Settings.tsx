@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AccountTab } from "@/components/settings/AccountTab";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("revenue");
@@ -217,6 +218,7 @@ export default function Settings() {
             <Percent className="w-4 h-4 mr-2" />
             % AV
           </TabsTrigger>
+          <TabsTrigger value="account">Conta</TabsTrigger>
         </TabsList>
 
         {/* Categories Tabs */}
@@ -840,6 +842,11 @@ export default function Settings() {
               </form>
             </GlassCard>
           )}
+        </TabsContent>
+
+        {/* Account Tab */}
+        <TabsContent value="account">
+          <AccountTab />
         </TabsContent>
       </Tabs>
     </div>
