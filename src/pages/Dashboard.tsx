@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useDRE } from "@/hooks/useDRE";
 import { useMetrics } from "@/hooks/useMetrics";
 import { useMetricsCache } from "@/hooks/useMetricsCache";
+import { useHistoricalDRE } from "@/hooks/useHistoricalDRE";
 import {
   Select,
   SelectContent,
@@ -42,6 +43,7 @@ export default function Dashboard() {
 
   const { dreData, loading: dreLoading } = useDRE(selectedMonth, selectedYear);
   const { metricsCache, loading: metricsLoading } = useMetricsCache(selectedMonth, selectedYear);
+  const { data: historicalData, loading: historicalLoading } = useHistoricalDRE(12);
   
   // Use metrics_cache if available, fallback to useMetrics hook
   const metricsData = metricsCache || useMetrics(selectedMonth, selectedYear).metricsData;
@@ -92,13 +94,8 @@ export default function Dashboard() {
 
   const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--destructive))"];
 
-  // Mock data for charts - In production, this would come from the database
-  const monthlyData = [
-    { month: "Jan", lucroLiquido: 12000, margemLiquida: 15 },
-    { month: "Fev", lucroLiquido: 15000, margemLiquida: 18 },
-    { month: "Mar", lucroLiquido: 18000, margemLiquida: 20 },
-    { month: "Abr", lucroLiquido: dreData?.lucroLiquido || 0, margemLiquida: dreData?.margemLiquida || 0 },
-  ];
+  // Use real historical data from database
+  const monthlyData = historicalData.length > 0 ? historicalData : [];
 
   const compositionData = metricsData
     ? [
@@ -361,7 +358,7 @@ export default function Dashboard() {
             <GradientText>Evolução do Lucro Líquido</GradientText>
           </h3>
           <div className="h-64">
-            {dreData && dreData.lucroLiquido > 0 ? (
+            {!historicalLoading && monthlyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -384,6 +381,10 @@ export default function Dashboard() {
                   />
                 </LineChart>
               </ResponsiveContainer>
+            ) : historicalLoading ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                Carregando histórico...
+              </div>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
                 Adicione lançamentos para visualizar gráficos

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientText } from "@/components/GradientText";
 import { toast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,15 +20,20 @@ import {
 
 export default function CompanySetup() {
   const { user } = useAuth();
-  const { refreshCompanies } = useCompany();
+  const { companies, refreshCompanies } = useCompany();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [hasExistingCompany, setHasExistingCompany] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     tax_id: "",
     tax_regime: "simples_nacional" as const,
     fiscal_period: "monthly",
   });
+
+  useEffect(() => {
+    setHasExistingCompany(companies.length > 0);
+  }, [companies]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,12 +73,26 @@ export default function CompanySetup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
+        {hasExistingCompany && (
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar ao Dashboard
+          </Button>
+        )}
+        
         <div className="text-center mb-8 animate-fade-up">
           <h1 className="text-4xl font-bold mb-2">
             <GradientText sparkle>Configure sua Empresa</GradientText>
           </h1>
           <p className="text-muted-foreground">
-            Adicione as informações da sua empresa para começar
+            {hasExistingCompany 
+              ? "Adicione uma nova empresa" 
+              : "Adicione as informações da sua empresa para começar"
+            }
           </p>
         </div>
 

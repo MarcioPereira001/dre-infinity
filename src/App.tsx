@@ -18,6 +18,7 @@ import BreakEven from "./pages/BreakEven";
 import Goals from "./pages/Goals";
 import Scenarios from "./pages/Scenarios";
 import Users from "./pages/Users";
+import DebugData from "./pages/DebugData";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -117,6 +118,16 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <Users />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/debug"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <DebugData />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }

@@ -128,10 +128,19 @@ export function useDRE(
       let receitasFinanceiras = 0;
 
       console.log("Processando transações:", transactions?.length);
+      console.log("Filtros aplicados - Month:", month, "Year:", year, "CategoryId:", categoryId, "ClientId:", clientId);
       
       transactions?.forEach((t: any) => {
         const amount = Number(t.amount);
         const categoryType = t.category?.category_type;
+        
+        console.log("Transaction:", {
+          description: t.description,
+          amount,
+          categoryType,
+          categoryName: t.category?.name,
+          hasCategory: !!t.category_id
+        });
         
         // Log para debug
         if (!t.category_id) {
@@ -141,15 +150,19 @@ export function useDRE(
         // Processar baseado no tipo de categoria
         if (categoryType === "revenue") {
           receitaBruta += amount;
+          console.log("Adicionado à receita bruta:", amount, "Total:", receitaBruta);
         } else if (categoryType === "cost") {
           cmv += amount;
+          console.log("Adicionado ao CMV:", amount, "Total:", cmv);
         } else if (categoryType === "expense") {
           // Classificar despesas
           const categoryName = t.category?.name?.toLowerCase() || "";
           if (categoryName.includes("financeira")) {
             despesasFinanceiras += amount;
+            console.log("Adicionado a despesas financeiras:", amount);
           } else {
             despesasOperacionais += amount;
+            console.log("Adicionado a despesas operacionais:", amount);
           }
         } else if (!categoryType && t.transaction_type === "operational") {
           // Fallback: transações operacionais sem categoria são consideradas receita
@@ -157,13 +170,15 @@ export function useDRE(
           receitaBruta += amount;
         }
       });
-      
       console.log("DRE Calculada:", {
         receitaBruta,
         cmv,
         despesasOperacionais,
         despesasFinanceiras,
-        receitasFinanceiras
+        receitasFinanceiras,
+        transactionsCount: transactions?.length,
+        company_id: company.id,
+        filters: { month, year, categoryId, clientId }
       });
 
       // Calcular deduções baseadas nas configurações de impostos
