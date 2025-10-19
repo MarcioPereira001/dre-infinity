@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   LineChart,
@@ -520,12 +521,23 @@ export default function Dashboard() {
                 </LineChart>
               </ResponsiveContainer>
             ) : historicalLoading ? (
-              <div className="h-full flex items-center justify-center text-muted-foreground">
-                Carregando histórico...
+              <div className="h-full flex items-center justify-center">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-6 bg-primary/20 rounded w-32 mx-auto"></div>
+                  <div className="h-24 bg-primary/10 rounded"></div>
+                </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">
-                Adicione lançamentos para visualizar gráficos
+              <div className="h-full flex flex-col items-center justify-center text-center px-4 animate-fade-in">
+                <div className="p-6 glass rounded-lg border border-primary/20">
+                  <p className="text-lg font-semibold mb-2">📊 Nenhum dado disponível</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Cadastre transações em <strong>Lançamentos</strong> para visualizar seus gráficos.
+                  </p>
+                  <Button onClick={() => navigate("/transactions")} variant="glow" size="sm">
+                    Ir para Lançamentos
+                  </Button>
+                </div>
               </div>
             )}
           </div>

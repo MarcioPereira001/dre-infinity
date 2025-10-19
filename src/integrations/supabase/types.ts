@@ -210,6 +210,7 @@ export type Database = {
           roi: number | null
           safety_margin: number | null
           sales_costs: number | null
+          tax_deductions: number | null
           total_active_clients: number | null
           total_revenue: number | null
           total_sales_count: number | null
@@ -237,6 +238,7 @@ export type Database = {
           roi?: number | null
           safety_margin?: number | null
           sales_costs?: number | null
+          tax_deductions?: number | null
           total_active_clients?: number | null
           total_revenue?: number | null
           total_sales_count?: number | null
@@ -264,6 +266,7 @@ export type Database = {
           roi?: number | null
           safety_margin?: number | null
           sales_costs?: number | null
+          tax_deductions?: number | null
           total_active_clients?: number | null
           total_revenue?: number | null
           total_sales_count?: number | null

@@ -19,6 +19,7 @@ import Goals from "./pages/Goals";
 import Scenarios from "./pages/Scenarios";
 import Users from "./pages/Users";
 import DebugData from "./pages/DebugData";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -128,6 +129,16 @@ const App = () => (
                   <ProtectedRoute>
                     <DashboardLayout>
                       <DebugData />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/help"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Help />
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
