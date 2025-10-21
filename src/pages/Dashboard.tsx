@@ -8,8 +8,6 @@ import { useMetrics } from "@/hooks/useMetrics";
 import { useMetricsCache } from "@/hooks/useMetricsCache";
 import { useHistoricalDRE } from "@/hooks/useHistoricalDRE";
 import { useGoals } from "@/hooks/useGoals";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -43,7 +41,6 @@ import { GoalProgressIndicator } from "@/components/dashboard/GoalProgressIndica
 export default function Dashboard() {
   const { company, companies, loading: companyLoading } = useCompany();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -51,40 +48,12 @@ export default function Dashboard() {
   const [comparisonType, setComparisonType] = useState<"none" | "previous-month" | "same-period-last-year">("none");
 
   const { dreData, loading: dreLoading } = useDRE(selectedMonth, selectedYear);
-  const { metricsCache, loading: metricsLoading, refreshMetricsCache } = useMetricsCache(selectedMonth, selectedYear);
+  const { metricsCache, loading: metricsLoading } = useMetricsCache(selectedMonth, selectedYear);
   const { data: historicalData, loading: historicalLoading } = useHistoricalDRE(12);
   const { goals, loading: goalsLoading } = useGoals(selectedMonth, selectedYear);
   
   // Use metrics_cache if available, fallback to useMetrics hook
   const metricsData = metricsCache || useMetrics(selectedMonth, selectedYear).metricsData;
-
-  const handleForceRecalculate = async () => {
-    if (!company) return;
-    
-    try {
-      const { error } = await supabase.rpc('calculate_and_cache_metrics', {
-        p_company_id: company.id,
-        p_month: selectedMonth,
-        p_year: selectedYear
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "✅ Métricas Recalculadas",
-        description: "Os dados do Dashboard foram atualizados com sucesso.",
-      });
-      
-      // Refresh do cache
-      await refreshMetricsCache();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao recalcular",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   // Comparison data
   const comparisonMonth = comparisonType === "previous-month" 
@@ -204,19 +173,8 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleForceRecalculate}
-          disabled={!company || metricsLoading}
-          className="flex items-center gap-2"
-        >
-          🔄 Atualizar Dados
-        </Button>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-        <div className="w-full sm:w-40">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <div className="w-full sm:w-40">
             <Label>Mês</Label>
             <Select
               value={selectedMonth.toString()}
@@ -271,6 +229,7 @@ export default function Dashboard() {
             </Select>
           </div>
         </div>
+      </div>
 
       {/* DRE KPIs Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

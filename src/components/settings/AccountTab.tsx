@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCompany } from "@/contexts/CompanyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,15 +29,11 @@ import {
 import { Building2, Trash2, Save } from "lucide-react";
 
 export const AccountTab = () => {
-  const { company, companies, refreshCompanies } = useCompany();
+  const { company, refreshCompanies } = useCompany();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isUpdating, setIsUpdating] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || "");
-  
-  // Buscar empresa selecionada
-  const selectedCompany = companies.find(c => c.id === selectedCompanyId) || company;
   
   const [formData, setFormData] = useState({
     name: company?.name || "",
@@ -46,21 +42,8 @@ export const AccountTab = () => {
     fiscal_period: company?.fiscal_period || "monthly",
   });
 
-  // Atualizar formData quando empresa selecionada mudar
-  useEffect(() => {
-    if (selectedCompany) {
-      setFormData({
-        name: selectedCompany.name || "",
-        tax_id: selectedCompany.tax_id || "",
-        tax_regime: (selectedCompany.tax_regime as "simples_nacional" | "lucro_presumido" | "lucro_real") || "simples_nacional",
-        fiscal_period: selectedCompany.fiscal_period || "monthly",
-      });
-      setSelectedCompanyId(selectedCompany.id);
-    }
-  }, [selectedCompany]);
-
   const handleUpdateCompany = async () => {
-    if (!selectedCompany) return;
+    if (!company) return;
 
     try {
       setIsUpdating(true);
@@ -72,7 +55,7 @@ export const AccountTab = () => {
           tax_regime: formData.tax_regime,
           fiscal_period: formData.fiscal_period,
         })
-        .eq("id", selectedCompany.id);
+        .eq("id", company.id);
 
       if (error) throw error;
 
@@ -94,7 +77,7 @@ export const AccountTab = () => {
   };
 
   const handleDeleteCompany = async () => {
-    if (!selectedCompany || deleteConfirmation !== selectedCompany.name) {
+    if (!company || deleteConfirmation !== company.name) {
       toast({
         title: "Confirmação incorreta",
         description: "O nome da empresa não corresponde.",
@@ -107,7 +90,7 @@ export const AccountTab = () => {
       const { error } = await supabase
         .from("companies")
         .delete()
-        .eq("id", selectedCompany.id);
+        .eq("id", company.id);
 
       if (error) throw error;
 
@@ -117,8 +100,6 @@ export const AccountTab = () => {
       });
 
       // Refresh companies and redirect
-      setSelectedCompanyId("");
-      setDeleteConfirmation("");
       await refreshCompanies();
       navigate("/company-setup");
     } catch (error: any) {
@@ -142,29 +123,6 @@ export const AccountTab = () => {
 
   return (
     <div className="space-y-6">
-      {companies.length > 1 && (
-        <GlassCard className="p-4 bg-accent/10 border-accent/30">
-          <Label htmlFor="company-selector" className="text-base font-medium mb-2 block">
-            Selecionar Empresa para Configurar
-          </Label>
-          <Select
-            value={selectedCompanyId}
-            onValueChange={(value) => setSelectedCompanyId(value)}
-          >
-            <SelectTrigger id="company-selector" className="w-full">
-              <SelectValue placeholder="Selecione uma empresa" />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </GlassCard>
-      )}
-      
       <GlassCard className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <Building2 className="w-6 h-6 text-primary" />
@@ -275,13 +233,13 @@ export const AccountTab = () => {
               <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
               <AlertDialogDescription>
                 Esta ação não pode ser desfeita. Para confirmar, digite o nome da
-                empresa <strong>"{selectedCompany?.name}"</strong> abaixo:
+                empresa <strong>"{company.name}"</strong> abaixo:
               </AlertDialogDescription>
             </AlertDialogHeader>
             <Input
               value={deleteConfirmation}
               onChange={(e) => setDeleteConfirmation(e.target.value)}
-              placeholder={`Digite: ${selectedCompany?.name}`}
+              placeholder={`Digite: ${company.name}`}
             />
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>
@@ -289,7 +247,7 @@ export const AccountTab = () => {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteCompany}
-                disabled={deleteConfirmation !== selectedCompany?.name}
+                disabled={deleteConfirmation !== company.name}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Confirmar Exclusão
