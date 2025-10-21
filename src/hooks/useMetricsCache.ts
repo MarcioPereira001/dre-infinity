@@ -111,6 +111,7 @@ export const useMetricsCache = (month?: number, year?: number) => {
   return {
     metricsCache,
     loading,
+    lastUpdated: metricsCache?.last_calculated_at,
     refreshMetricsCache: fetchMetricsCache,
   };
 };

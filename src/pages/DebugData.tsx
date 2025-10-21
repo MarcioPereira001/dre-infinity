@@ -115,13 +115,19 @@ export default function DebugData() {
         </p>
       </div>
 
-      <div className="flex gap-4">
-        <Button onClick={fetchData} disabled={loading}>
-          Atualizar Dados
-        </Button>
-        <Button onClick={recalculateMetrics} disabled={loading} variant="glow">
-          Recalcular Métricas
-        </Button>
+      <div className="space-y-4">
+        <div className="flex gap-4">
+          <Button onClick={fetchData} disabled={loading}>
+            Atualizar Dados
+          </Button>
+          <Button onClick={recalculateMetrics} disabled={loading} variant="glow">
+            🔄 Recalcular Métricas (Forçar)
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          <strong>Quando usar "Recalcular Métricas":</strong> Se o Dashboard estiver vazio ou com dados desatualizados, 
+          clique em "Recalcular Métricas" para reprocessar TODAS as transações e atualizar os KPIs automaticamente.
+        </p>
       </div>
 
       <GlassCard className="p-6">

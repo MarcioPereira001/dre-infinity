@@ -1,3 +1,14 @@
+/**
+ * ⚠️ DEPRECATION NOTICE:
+ * Este hook calcula métricas no frontend para backwards compatibility e validação.
+ * 
+ * Para produção, USE `useMetricsCache` que lê os valores pré-calculados
+ * pela função SQL `calculate_and_cache_metrics()`.
+ * 
+ * Os cálculos devem ser IDÊNTICOS aos da função SQL para garantir consistência.
+ * Se houver divergências, a fonte de verdade é o `metrics_cache`.
+ */
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/contexts/CompanyContext";
