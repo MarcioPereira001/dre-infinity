@@ -18,6 +18,7 @@ import {
   Calculator,
   Activity,
   Users,
+  HelpCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Calculator, label: "Cenários", path: "/scenarios" },
     { icon: Users, label: "Usuários", path: "/users" },
     { icon: Settings, label: "Configurações", path: "/settings" },
+    { icon: HelpCircle, label: "Ajuda", path: "/help" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

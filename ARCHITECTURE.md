@@ -18,6 +18,27 @@ graph TD
     H --> I[Visualização em tempo real]
 ```
 
+## Fluxo de Atualização Automática de Métricas
+
+**Como funciona o sistema de cache automático:**
+
+1. **Usuário cria/edita/deleta transação** em `/transactions`
+2. **PostgreSQL trigger `transactions_metrics_trigger` dispara automaticamente** (AFTER INSERT/UPDATE/DELETE)
+3. **Função SQL `trigger_recalculate_metrics()` é executada**
+4. **Função SQL `calculate_and_cache_metrics()` recalcula TODAS as métricas:**
+   - 📊 CAC, LTV, LTV/CAC Ratio
+   - 💰 ROI, Average Ticket
+   - ⚖️ Break-Even Point, Safety Margin
+   - 💸 Fixed/Variable Costs, Tax Deductions
+5. **Resultados são salvos em `metrics_cache`** com timestamp em `last_calculated_at`
+6. **Dashboard lê `metrics_cache` via `useMetricsCache` hook** e exibe em tempo real
+7. **✅ Nenhum recálculo manual necessário!**
+
+**Vantagens:**
+- ⚡ Performance: Dashboard carrega instantaneamente
+- 🔄 Sempre atualizado: Dados sincronizados automaticamente
+- 🛡️ Consistência: Cálculos únicos no backend (evita discrepâncias)
+
 ### Detalhamento do Fluxo
 
 1. **Cadastro de Transação** (`/transactions`)
