@@ -37,7 +37,7 @@ export const useMetricsCache = (month?: number, year?: number) => {
   const [metricsCache, setMetricsCache] = useState<MetricsCache | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchMetricsCache = async () => {
+  const fetchMetricsCache = async (signal?: { aborted: boolean }) => {
     if (!company) return;
 
     try {
@@ -58,6 +58,9 @@ export const useMetricsCache = (month?: number, year?: number) => {
       const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
+      
+      // Only update state if not aborted
+      if (signal?.aborted) return;
       
       // Convert snake_case to camelCase
       if (data) {
@@ -93,6 +96,7 @@ export const useMetricsCache = (month?: number, year?: number) => {
         setMetricsCache(null);
       }
     } catch (error: any) {
+      if (signal?.aborted) return;
       console.error("Error fetching metrics cache:", error);
       toast({
         title: "Erro ao carregar métricas",
@@ -100,12 +104,22 @@ export const useMetricsCache = (month?: number, year?: number) => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchMetricsCache();
+    let isMounted = true;
+    const signal = { aborted: false };
+
+    fetchMetricsCache(signal);
+
+    return () => {
+      isMounted = false;
+      signal.aborted = true;
+    };
   }, [company, month, year]);
 
   return {

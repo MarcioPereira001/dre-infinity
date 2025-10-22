@@ -73,8 +73,13 @@ export function useDRE(
   const { toast } = useToast();
   const { taxConfig } = useTaxConfigurations();
 
-  const calculateDRE = async () => {
+  const calculateDRE = async (isMounted: boolean | { current: boolean } = true) => {
     if (!company) return;
+
+    const checkMounted = () => {
+      if (typeof isMounted === 'boolean') return isMounted;
+      return isMounted.current;
+    };
 
     try {
       setLoading(true);
@@ -119,6 +124,8 @@ export function useDRE(
       if (clientId) previousQuery = previousQuery.eq("client_id", clientId);
 
       const { data: previousTransactions } = await previousQuery;
+
+      if (!checkMounted()) return;
 
       // Calcular DRE
       let receitaBruta = 0;
@@ -295,6 +302,8 @@ export function useDRE(
       const prevImpostosTotal = prevIRPJ + prevIRPJAdicional + prevCSLL;
       const prevLucroLiquido = prevLAIR - prevImpostosTotal;
 
+      if (!checkMounted()) return;
+
       setPreviousDreData({
         receitaBruta: prevReceitaBruta,
         icms: 0,
@@ -341,6 +350,8 @@ export function useDRE(
         lucroLiquido: prevLucroLiquido > 0 ? ((lucroLiquido - prevLucroLiquido) / prevLucroLiquido) * 100 : 0,
       } : undefined;
 
+      if (!checkMounted()) return;
+
       setDreData({
         receitaBruta,
         icms,
@@ -376,18 +387,31 @@ export function useDRE(
         horizontalAnalysis,
       });
     } catch (error: any) {
+      if (!checkMounted()) return;
       toast({
         title: "Erro ao calcular DRE",
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (checkMounted()) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    calculateDRE();
+    let isMounted = true;
+
+    const loadDRE = async () => {
+      await calculateDRE(isMounted);
+    };
+
+    loadDRE();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company, month, year, categoryId, clientId, taxConfig]);
 
   return {

@@ -51,8 +51,13 @@ export function useMetrics(month?: number, year?: number) {
   const { company } = useCompany();
   const { toast } = useToast();
 
-  const calculateMetrics = async () => {
+  const calculateMetrics = async (isMounted: boolean | { current: boolean } = true) => {
     if (!company) return;
+
+    const checkMounted = () => {
+      if (typeof isMounted === 'boolean') return isMounted;
+      return isMounted.current;
+    };
 
     try {
       setLoading(true);
@@ -71,6 +76,8 @@ export function useMetrics(month?: number, year?: number) {
 
       const { data: transactions, error } = await query;
       if (error) throw error;
+
+      if (!checkMounted()) return;
 
       // Inicializar variáveis
       let totalRevenue = 0;
@@ -210,6 +217,8 @@ export function useMetrics(month?: number, year?: number) {
         ? ((netRevenue - totalCosts) / totalCosts) * 100 
         : 0;
 
+      if (!checkMounted()) return;
+
       setMetricsData({
         totalRevenue,
         netRevenue,
@@ -235,18 +244,31 @@ export function useMetrics(month?: number, year?: number) {
       });
 
     } catch (error: any) {
+      if (!checkMounted()) return;
       toast({
         title: "Erro ao calcular métricas",
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (checkMounted()) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    calculateMetrics();
+    let isMounted = true;
+
+    const loadMetrics = async () => {
+      await calculateMetrics(isMounted);
+    };
+
+    loadMetrics();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company, month, year]);
 
   return {

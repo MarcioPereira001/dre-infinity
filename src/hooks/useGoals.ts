@@ -81,7 +81,43 @@ export const useGoals = (month: number, year: number) => {
   };
 
   useEffect(() => {
-    fetchGoals();
+    let isMounted = true;
+
+    const loadGoals = async () => {
+      if (!company) return;
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("goals")
+          .select("*")
+          .eq("company_id", company.id)
+          .eq("period_month", month)
+          .eq("period_year", year);
+
+        if (error) throw error;
+        
+        if (!isMounted) return;
+        setGoals(data || []);
+      } catch (error: any) {
+        if (!isMounted) return;
+        toast({
+          title: "Erro ao carregar metas",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadGoals();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company, month, year]);
 
   return {

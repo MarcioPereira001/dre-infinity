@@ -35,11 +35,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = async (signal?: { aborted: boolean }) => {
     if (!user) {
-      setCompanies([]);
-      setCompany(null);
-      setLoading(false);
+      if (!signal?.aborted) {
+        setCompanies([]);
+        setCompany(null);
+        setLoading(false);
+      }
       return;
     }
 
@@ -52,6 +54,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
+      if (signal?.aborted) return;
+
       setCompanies(data || []);
       
       if (data && data.length > 0) {
@@ -62,14 +66,63 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         setCompany(currentCompany);
       }
     } catch (error) {
+      if (signal?.aborted) return;
       console.error("Error fetching companies:", error);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchCompanies();
+    let isMounted = true;
+
+    const loadCompanies = async () => {
+      if (!user) {
+        if (isMounted) {
+          setCompanies([]);
+          setCompany(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("companies")
+          .select("*")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (!isMounted) return;
+
+        setCompanies(data || []);
+        
+        if (data && data.length > 0) {
+          const savedCompanyId = localStorage.getItem("currentCompanyId");
+          const currentCompany = savedCompanyId
+            ? data.find((c) => c.id === savedCompanyId) || data[0]
+            : data[0];
+          setCompany(currentCompany);
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        console.error("Error fetching companies:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCompanies();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   const setCurrentCompany = (newCompany: Company) => {

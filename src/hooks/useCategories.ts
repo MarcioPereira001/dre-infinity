@@ -45,7 +45,49 @@ export function useCategories(categoryType?: "revenue" | "cost" | "expense") {
   };
 
   useEffect(() => {
-    fetchCategories();
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      if (!company) return;
+
+      try {
+        setLoading(true);
+        let query = supabase
+          .from("dre_categories")
+          .select("*")
+          .eq("company_id", company.id)
+          .eq("is_active", true)
+          .order("display_order", { ascending: true });
+
+        if (categoryType) {
+          query = query.eq("category_type", categoryType);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        
+        if (!isMounted) return;
+        setCategories(data || []);
+      } catch (error: any) {
+        if (!isMounted) return;
+        toast({
+          title: "Erro ao carregar categorias",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company, categoryType]);
 
   const createCategory = async (category: Omit<CategoryInsert, "company_id">) => {

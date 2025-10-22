@@ -39,7 +39,43 @@ export function useClients() {
   };
 
   useEffect(() => {
-    fetchClients();
+    let isMounted = true;
+
+    const loadClients = async () => {
+      if (!company) return;
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("clients")
+          .select("*")
+          .eq("company_id", company.id)
+          .eq("is_active", true)
+          .order("name", { ascending: true });
+
+        if (error) throw error;
+        
+        if (!isMounted) return;
+        setClients(data || []);
+      } catch (error: any) {
+        if (!isMounted) return;
+        toast({
+          title: "Erro ao carregar clientes",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadClients();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company]);
 
   const createClient = async (client: Omit<ClientInsert, "company_id">) => {

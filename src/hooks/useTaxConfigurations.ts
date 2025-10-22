@@ -114,7 +114,49 @@ export function useTaxConfigurations() {
   };
 
   useEffect(() => {
-    fetchTaxConfiguration();
+    let isMounted = true;
+
+    const loadTaxConfiguration = async () => {
+      if (!company) return;
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("tax_configurations")
+          .select("*")
+          .eq("company_id", company.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!isMounted) return;
+
+        if (!data) {
+          // Create default if not exists
+          await createDefaultTaxConfiguration();
+          return;
+        }
+
+        setTaxConfig(data as TaxConfiguration);
+      } catch (error: any) {
+        if (!isMounted) return;
+        toast({
+          title: "Erro ao carregar configurações de impostos",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadTaxConfiguration();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company]);
 
   return {

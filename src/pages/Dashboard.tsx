@@ -54,9 +54,10 @@ export default function Dashboard() {
   const { metricsCache, loading: metricsLoading, refreshMetricsCache } = useMetricsCache(selectedMonth, selectedYear);
   const { data: historicalData, loading: historicalLoading } = useHistoricalDRE(12);
   const { goals, loading: goalsLoading } = useGoals(selectedMonth, selectedYear);
+  const { metricsData: fallbackMetricsData } = useMetrics(selectedMonth, selectedYear);
   
-  // Use metrics_cache if available, fallback to useMetrics hook
-  const metricsData = metricsCache || useMetrics(selectedMonth, selectedYear).metricsData;
+  // Use metrics_cache if available, fallback to calculated metrics
+  const metricsData = metricsCache || fallbackMetricsData;
 
   const handleForceRecalculate = async () => {
     if (!company) return;

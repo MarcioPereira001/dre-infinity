@@ -60,7 +60,57 @@ export function useTransactions(filters?: TransactionFilters) {
   };
 
   useEffect(() => {
-    fetchTransactions();
+    let isMounted = true;
+
+    const loadTransactions = async () => {
+      if (!company) return;
+
+      try {
+        setLoading(true);
+        let query = supabase
+          .from("transactions")
+          .select("*")
+          .eq("company_id", company.id)
+          .order("transaction_date", { ascending: false });
+
+        if (filters?.startDate) {
+          query = query.gte("transaction_date", filters.startDate);
+        }
+        if (filters?.endDate) {
+          query = query.lte("transaction_date", filters.endDate);
+        }
+        if (filters?.categoryId) {
+          query = query.eq("category_id", filters.categoryId);
+        }
+        if (filters?.search) {
+          query = query.ilike("description", `%${filters.search}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        
+        if (!isMounted) return;
+        setTransactions(data || []);
+      } catch (error: any) {
+        if (!isMounted) return;
+        toast({
+          title: "Erro ao carregar lançamentos",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadTransactions();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company, filters?.startDate, filters?.endDate, filters?.categoryId, filters?.search]);
 
   const createTransaction = async (transaction: {

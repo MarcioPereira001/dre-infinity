@@ -12,7 +12,7 @@ export default function DebugData() {
   const [metrics, setMetrics] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = async (signal?: AbortSignal) => {
     if (!company) return;
 
     try {
@@ -29,6 +29,7 @@ export default function DebugData() {
         .order("transaction_date", { ascending: false });
 
       if (transError) throw transError;
+      if (signal?.aborted) return;
       setTransactions(transData || []);
 
       // Fetch metrics cache
@@ -40,15 +41,19 @@ export default function DebugData() {
         .order("period_month", { ascending: false });
 
       if (metricsError) throw metricsError;
+      if (signal?.aborted) return;
       setMetrics(metricsData || []);
     } catch (error: any) {
+      if (signal?.aborted) return;
       toast({
         title: "Erro ao buscar dados",
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   };
 
@@ -101,7 +106,60 @@ export default function DebugData() {
   };
 
   useEffect(() => {
-    fetchData();
+    let isMounted = true;
+
+    const loadData = async () => {
+      if (!company) return;
+
+      try {
+        setLoading(true);
+
+        // Fetch transactions
+        const { data: transData, error: transError } = await supabase
+          .from("transactions")
+          .select(`
+            *,
+            category:dre_categories(*)
+          `)
+          .eq("company_id", company.id)
+          .order("transaction_date", { ascending: false });
+
+        if (transError) throw transError;
+        
+        if (!isMounted) return;
+        setTransactions(transData || []);
+
+        // Fetch metrics cache
+        const { data: metricsData, error: metricsError } = await supabase
+          .from("metrics_cache")
+          .select("*")
+          .eq("company_id", company.id)
+          .order("period_year", { ascending: false })
+          .order("period_month", { ascending: false });
+
+        if (metricsError) throw metricsError;
+        
+        if (!isMounted) return;
+        setMetrics(metricsData || []);
+      } catch (error: any) {
+        if (!isMounted) return;
+        toast({
+          title: "Erro ao buscar dados",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [company]);
 
   return (
@@ -117,7 +175,7 @@ export default function DebugData() {
 
       <div className="space-y-4">
         <div className="flex gap-4">
-          <Button onClick={fetchData} disabled={loading}>
+          <Button onClick={() => fetchData()} disabled={loading}>
             Atualizar Dados
           </Button>
           <Button onClick={recalculateMetrics} disabled={loading} variant="glow">
