@@ -44,7 +44,25 @@ export const AccountTab = () => {
     tax_id: company?.tax_id || "",
     tax_regime: (company?.tax_regime as "simples_nacional" | "lucro_presumido" | "lucro_real") || "simples_nacional",
     fiscal_period: company?.fiscal_period || "monthly",
+    business_category: company?.business_category || "",
   });
+
+  const businessCategories = [
+    "Tecnologia",
+    "Varejo",
+    "Serviços",
+    "Indústria",
+    "Consultoria",
+    "Saúde",
+    "Educação",
+    "Alimentação",
+    "Construção",
+    "Transporte",
+    "Agronegócio",
+    "Marketing",
+    "Finanças",
+    "Outro",
+  ];
 
   // Atualizar formData quando empresa selecionada mudar
   useEffect(() => {
@@ -54,6 +72,7 @@ export const AccountTab = () => {
         tax_id: selectedCompany.tax_id || "",
         tax_regime: (selectedCompany.tax_regime as "simples_nacional" | "lucro_presumido" | "lucro_real") || "simples_nacional",
         fiscal_period: selectedCompany.fiscal_period || "monthly",
+        business_category: selectedCompany.business_category || "",
       });
       setSelectedCompanyId(selectedCompany.id);
     }
@@ -71,6 +90,7 @@ export const AccountTab = () => {
           tax_id: formData.tax_id,
           tax_regime: formData.tax_regime,
           fiscal_period: formData.fiscal_period,
+          business_category: formData.business_category,
         })
         .eq("id", selectedCompany.id);
 
@@ -235,6 +255,35 @@ export const AccountTab = () => {
                 <SelectItem value="annual">Anual</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="business-category">Categoria de Negócio</Label>
+            <Select
+              value={formData.business_category}
+              onValueChange={(value) =>
+                setFormData({ ...formData, business_category: value })
+              }
+            >
+              <SelectTrigger id="business-category">
+                <SelectValue placeholder="Selecione ou digite manualmente" />
+              </SelectTrigger>
+              <SelectContent>
+                {businessCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Ou digite sua categoria personalizada"
+              value={formData.business_category}
+              onChange={(e) =>
+                setFormData({ ...formData, business_category: e.target.value })
+              }
+              className="mt-2"
+            />
           </div>
 
           <div className="flex justify-end pt-4">

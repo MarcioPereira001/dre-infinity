@@ -29,7 +29,25 @@ export default function CompanySetup() {
     tax_id: "",
     tax_regime: "simples_nacional" as const,
     fiscal_period: "monthly",
+    business_category: "",
   });
+
+  const businessCategories = [
+    "Tecnologia",
+    "Varejo",
+    "Serviços",
+    "Indústria",
+    "Consultoria",
+    "Saúde",
+    "Educação",
+    "Alimentação",
+    "Construção",
+    "Transporte",
+    "Agronegócio",
+    "Marketing",
+    "Finanças",
+    "Outro",
+  ];
 
   useEffect(() => {
     setHasExistingCompany(companies.length > 0);
@@ -46,6 +64,7 @@ export default function CompanySetup() {
         tax_id: formData.tax_id || null,
         tax_regime: formData.tax_regime,
         fiscal_period: formData.fiscal_period,
+        business_category: formData.business_category || null,
         owner_id: user.id,
       });
 
@@ -167,6 +186,37 @@ export default function CompanySetup() {
                   <SelectItem value="annual">Anual</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="business_category">Categoria de Negócio</Label>
+              <Select
+                value={formData.business_category}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, business_category: value })
+                }
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione ou digite manualmente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {businessCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Ou digite sua categoria personalizada"
+                value={formData.business_category}
+                onChange={(e) =>
+                  setFormData({ ...formData, business_category: e.target.value })
+                }
+                disabled={loading}
+                className="mt-2"
+              />
             </div>
 
             <Button

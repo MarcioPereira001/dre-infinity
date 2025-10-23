@@ -63,6 +63,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          business_category: string | null
           created_at: string
           fiscal_period: string
           id: string
@@ -73,6 +74,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          business_category?: string | null
           created_at?: string
           fiscal_period?: string
           id?: string
@@ -83,6 +85,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          business_category?: string | null
           created_at?: string
           fiscal_period?: string
           id?: string

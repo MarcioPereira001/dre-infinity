@@ -8,8 +8,10 @@ import { useMetrics } from "@/hooks/useMetrics";
 import { useMetricsCache } from "@/hooks/useMetricsCache";
 import { useHistoricalDRE } from "@/hooks/useHistoricalDRE";
 import { useGoals } from "@/hooks/useGoals";
+import { useExportDashboard } from "@/hooks/useExportDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { MetricInfoPopover } from "@/components/dashboard/MetricInfoPopover";
 import {
   Select,
   SelectContent,
@@ -20,6 +22,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LineChart,
   Line,
@@ -35,7 +45,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, Users, Target, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Users, Target, Activity, ArrowUpRight, ArrowDownRight, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { RevenueCompositionFunnel } from "@/components/dashboard/RevenueCompositionFunnel";
 import { KPIEvolutionCharts } from "@/components/dashboard/KPIEvolutionCharts";
 import { GoalProgressIndicator } from "@/components/dashboard/GoalProgressIndicator";
@@ -55,9 +65,45 @@ export default function Dashboard() {
   const { data: historicalData, loading: historicalLoading } = useHistoricalDRE(12);
   const { goals, loading: goalsLoading } = useGoals(selectedMonth, selectedYear);
   const { metricsData: fallbackMetricsData } = useMetrics(selectedMonth, selectedYear);
+  const { exportToXLSX, exportToPDF } = useExportDashboard();
   
   // Use metrics_cache if available, fallback to calculated metrics
   const metricsData = metricsCache || fallbackMetricsData;
+
+  const handleExport = (format: "xlsx" | "pdf") => {
+    if (!company || !dreData || !metricsData) {
+      toast({
+        title: "❌ Erro",
+        description: "Não há dados disponíveis para exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (format === "xlsx") {
+      exportToXLSX(
+        {
+          totalRevenue: dreData.receitaBruta,
+          netRevenue: dreData.receitaLiquida,
+          totalCosts: (dreData.receitaBruta - dreData.lucroBruto),
+          grossProfit: dreData.lucroBruto,
+          operatingExpenses: dreData.despesasOperacionais,
+          ebitda: dreData.lucroOperacional,
+          taxesDeductions: (dreData.receitaBruta - dreData.receitaLiquida),
+          netProfit: dreData.lucroLiquido,
+          grossMargin: dreData.margemBruta,
+          netMargin: dreData.margemLiquida,
+          ebitdaMargin: dreData.margemOperacional,
+        },
+        metricsData,
+        selectedMonth,
+        selectedYear,
+        company.name
+      );
+    } else {
+      exportToPDF();
+    }
+  };
 
   const handleForceRecalculate = async () => {
     if (!company) return;
@@ -74,6 +120,7 @@ export default function Dashboard() {
       toast({
         title: "✅ Métricas Recalculadas",
         description: "Os dados do Dashboard foram atualizados com sucesso.",
+        variant: "default",
       });
       
       // Refresh do cache
@@ -205,15 +252,38 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleForceRecalculate}
-          disabled={!company || metricsLoading}
-          className="flex items-center gap-2"
-        >
-          🔄 Atualizar Dados
-        </Button>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Formato de Exportação</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleExport("xlsx")}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Exportar XLSX
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar PDF (Imprimir)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleForceRecalculate}
+            disabled={!company || metricsLoading}
+            className="flex items-center gap-2"
+          >
+            🔄 Atualizar
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -306,6 +376,12 @@ export default function Dashboard() {
             label="Lucro Líquido"
             formatValue={formatCurrency}
           />
+          <MetricInfoPopover
+            title="Lucro Líquido"
+            description="O lucro líquido é o resultado final após deduzir todas as despesas, custos e impostos da receita total."
+            formula="Lucro Líquido = Receita Total - Custos - Despesas - Impostos"
+            example="Se sua receita foi R$ 100.000 e os custos + despesas + impostos totalizaram R$ 70.000, seu lucro líquido é R$ 30.000."
+          />
         </GlassCard>
 
         <GlassCard className="p-4 sm:p-6 relative overflow-hidden hover:shadow-glow-primary transition-all duration-300">
@@ -333,6 +409,12 @@ export default function Dashboard() {
               </span>
             </div>
           )}
+          <MetricInfoPopover
+            title="Lucro Bruto"
+            description="Lucro obtido após deduzir os custos diretos de produção ou aquisição de produtos/serviços da receita."
+            formula="Lucro Bruto = Receita Líquida - Custos Diretos"
+            example="Com receita de R$ 100.000 e custos diretos de R$ 40.000, o lucro bruto é R$ 60.000 (60% de margem)."
+          />
         </GlassCard>
 
         <GlassCard className="p-4 sm:p-6 relative overflow-hidden hover:shadow-glow-secondary transition-all duration-300">
@@ -404,7 +486,7 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <GlassCard className="p-4 sm:p-6">
+            <GlassCard className="p-4 sm:p-6 relative">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">CAC</h3>
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -415,6 +497,15 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-2">
                 {metricsData.newClientsCount} novos clientes
               </p>
+              <p className="text-xs text-muted-foreground">
+                Custos: {formatCurrency(metricsData.marketingCosts + metricsData.salesCosts)}
+              </p>
+              <MetricInfoPopover
+                title="CAC - Custo de Aquisição de Cliente"
+                description="Custo médio investido para adquirir um novo cliente, calculado dividindo os custos de marketing e vendas pelo número de novos clientes."
+                formula="CAC = (Custos de Marketing + Custos de Vendas) / Novos Clientes"
+                example="Com R$ 10.000 em custos e 50 novos clientes, o CAC é R$ 200 por cliente."
+              />
             </GlassCard>
 
             <GlassCard className="p-4 sm:p-6">
