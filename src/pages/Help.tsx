@@ -8,9 +8,7 @@ export default function Help() {
         <h1 className="text-4xl font-bold mb-2">
           <GradientText>Central de Ajuda</GradientText>
         </h1>
-        <p className="text-muted-foreground">
-          Aprenda a usar o DRE Infinity Spark e entenda suas métricas financeiras
-        </p>
+        <p className="text-muted-foreground">Aprenda a usar o DRE Infinity e entenda suas métricas financeiras</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
