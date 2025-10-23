@@ -1,16 +1,9 @@
 import { GlassCard } from "@/components/GlassCard";
 import { GradientText } from "@/components/GradientText";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HelpCircle, BookOpen, Calculator, TrendingUp } from "lucide-react";
-
 export default function Help() {
-  return (
-    <div className="space-y-6 animate-fade-in">
+  return <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-4xl font-bold mb-2">
           <GradientText>Central de Ajuda</GradientText>
@@ -26,10 +19,7 @@ export default function Help() {
           <h3 className="text-xl font-semibold mb-2">
             <GradientText>Primeiros Passos</GradientText>
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Configure sua empresa, cadastre categorias e comece a lançar transações
-            para visualizar seus resultados automaticamente.
-          </p>
+          <p className="text-sm text-muted-foreground">Configure sua empresa, cadastre categorias, clientes e outros em &quot;Configurações&quot; e comece a lançar transações para visualizar seus resultados com contagens automáticas.</p>
         </GlassCard>
 
         <GlassCard className="p-6 hover-scale">
@@ -298,6 +288,5 @@ export default function Help() {
           </div>
         </div>
       </GlassCard>
-    </div>
-  );
+    </div>;
 }
