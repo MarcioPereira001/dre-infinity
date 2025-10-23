@@ -19,7 +19,7 @@ export default function Help() {
           <h3 className="text-xl font-semibold mb-2">
             <GradientText>Primeiros Passos</GradientText>
           </h3>
-          <p className="text-sm text-muted-foreground">Configure sua empresa, cadastre categorias, clientes e outros em &quot;Configurações&quot; e comece a lançar transações para visualizar seus resultados com contagens automáticas.</p>
+          <p className="text-sm text-muted-foreground">Configure sua empresa, depois cadastre categorias/clientes e outros em &quot;Configurações&quot; e comece a lançar transações para visualizar seus resultados automaticamente.</p>
         </GlassCard>
 
         <GlassCard className="p-6 hover-scale">
