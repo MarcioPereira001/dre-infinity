@@ -240,12 +240,14 @@ export default function Dashboard() {
     ? Math.min((metricsData.ltvCacRatio / 3) * 100, 100)
     : 0;
 
-  // CAC exibido: se não houver novos clientes, mostra o total de custos de campanhas
-  const displayCAC = metricsData
-    ? (metricsData.newClientsCount > 0
-        ? metricsData.cac
-        : (metricsData.marketingCosts + metricsData.salesCosts))
+  // CAC: se não houver novos clientes, usa clientes ativos para calcular
+  const clientsForCAC = metricsData
+    ? (metricsData.newClientsCount > 0 ? metricsData.newClientsCount : metricsData.totalActiveClients)
     : 0;
+  
+  const displayCAC = metricsData && clientsForCAC > 0
+    ? (metricsData.marketingCosts + metricsData.salesCosts) / clientsForCAC
+    : (metricsData ? (metricsData.marketingCosts + metricsData.salesCosts) : 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -514,7 +516,10 @@ export default function Dashboard() {
                 <GradientText>{formatCurrency(displayCAC)}</GradientText>
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                {metricsData.newClientsCount} novos clientes
+                {metricsData.newClientsCount > 0 
+                  ? `${metricsData.newClientsCount} novos clientes`
+                  : `${metricsData.totalActiveClients} clientes ativos`
+                }
               </p>
               <p className="text-xs text-muted-foreground">
                 Custos: {formatCurrency(metricsData.marketingCosts + metricsData.salesCosts)}
