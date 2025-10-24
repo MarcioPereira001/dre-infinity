@@ -446,6 +446,12 @@ export default function Dashboard() {
             label="Receita Líquida"
             formatValue={formatCurrency}
           />
+          <MetricInfoPopover
+            title="Receita Líquida"
+            description="Receita total após dedução de impostos sobre vendas, devoluções e descontos. É a base para o cálculo da lucratividade."
+            formula="Receita Líquida = Receita Bruta - Impostos sobre Vendas"
+            example="Com receita bruta de R$ 100.000 e impostos de R$ 18.000, sua receita líquida é R$ 82.000."
+          />
         </GlassCard>
 
         <GlassCard className="p-4 sm:p-6 relative overflow-hidden hover:shadow-glow-secondary transition-all duration-300">
@@ -473,6 +479,12 @@ export default function Dashboard() {
               </span>
             </div>
           )}
+          <MetricInfoPopover
+            title="Lucro Operacional (EBITDA)"
+            description="Lucro antes de juros, impostos sobre lucro, depreciação e amortização. Mostra a eficiência operacional do negócio."
+            formula="EBITDA = Lucro Bruto - Despesas Operacionais"
+            example="Com lucro bruto de R$ 60.000 e despesas operacionais de R$ 20.000, o EBITDA é R$ 40.000."
+          />
         </GlassCard>
       </div>
 
@@ -519,6 +531,12 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-2">
                 Lifetime Value
               </p>
+              <MetricInfoPopover
+                title="LTV - Lifetime Value"
+                description="Valor total que um cliente gera durante todo o relacionamento com sua empresa. Estimado multiplicando o ticket médio por 12 meses."
+                formula="LTV = Ticket Médio × 12 meses"
+                example="Com ticket médio de R$ 500, o LTV estimado é R$ 6.000 ao longo de 12 meses."
+              />
             </GlassCard>
 
             <GlassCard className="p-4 sm:p-6">
@@ -535,6 +553,12 @@ export default function Dashboard() {
                   Meta: 3:1 {metricsData.ltvCacRatio >= 3 ? "✓" : ""}
                 </p>
               </div>
+              <MetricInfoPopover
+                title="Relação LTV/CAC"
+                description="Indica quantas vezes o valor do cliente supera o custo de aquisição. Uma relação saudável é acima de 3:1."
+                formula="LTV/CAC = Lifetime Value ÷ Custo de Aquisição"
+                example="Com LTV de R$ 6.000 e CAC de R$ 200, a relação é 30:1 (excelente)."
+              />
             </GlassCard>
 
             <GlassCard className="p-4 sm:p-6">
@@ -548,6 +572,12 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-2">
                 Retorno sobre Investimento
               </p>
+              <MetricInfoPopover
+                title="ROI - Retorno sobre Investimento"
+                description="Percentual de retorno obtido sobre os investimentos em marketing e vendas. Valores positivos indicam lucro."
+                formula="ROI = ((Receita Líquida - Custos) / Custos) × 100"
+                example="Com receita líquida de R$ 50.000 e custos de R$ 10.000, o ROI é 400%."
+              />
             </GlassCard>
 
             <GlassCard className="p-4 sm:p-6">
@@ -561,6 +591,12 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-2">
                 {metricsData.totalSalesCount} vendas
               </p>
+              <MetricInfoPopover
+                title="Ticket Médio"
+                description="Valor médio de cada venda realizada no período. Fundamental para calcular o LTV e estratégias de precificação."
+                formula="Ticket Médio = Receita Total ÷ Número de Vendas"
+                example="Com R$ 100.000 em 200 vendas, o ticket médio é R$ 500 por venda."
+              />
             </GlassCard>
 
             <GlassCard className="p-4 sm:p-6">
@@ -577,6 +613,12 @@ export default function Dashboard() {
                   : "0% da receita"
                 }
               </p>
+              <MetricInfoPopover
+                title="Ponto de Equilíbrio"
+                description="Receita mínima necessária para cobrir todos os custos fixos. Acima deste valor, a empresa começa a ter lucro."
+                formula="Ponto de Equilíbrio = Custos Fixos ÷ (Margem de Contribuição / Receita Líquida)"
+                example="Com custos fixos de R$ 30.000 e margem de contribuição de 60%, o ponto de equilíbrio é R$ 50.000."
+              />
             </GlassCard>
 
             <GlassCard className="p-4 sm:p-6">
@@ -590,6 +632,12 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-2">
                 {formatPercent(metricsData.safetyMarginPercent)} da receita
               </p>
+              <MetricInfoPopover
+                title="Margem de Segurança"
+                description="Quanto a receita pode cair percentualmente antes de atingir o ponto de equilíbrio. Maior margem = maior segurança financeira."
+                formula="Margem de Segurança = ((Receita Atual - Ponto de Equilíbrio) / Receita Atual) × 100"
+                example="Com receita de R$ 100.000 e ponto de equilíbrio de R$ 70.000, a margem é 30%."
+              />
             </GlassCard>
 
             <GlassCard className="p-4 sm:p-6">
@@ -603,6 +651,12 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-2">
                 {metricsData.repeatCustomersCount} recorrentes
               </p>
+              <MetricInfoPopover
+                title="Clientes Ativos"
+                description="Total de clientes únicos que realizaram compras no período. Inclui novos clientes e clientes recorrentes."
+                formula="Clientes Ativos = Novos Clientes + Clientes Recorrentes"
+                example="Com 50 novos clientes e 30 recorrentes, você tem 80 clientes ativos no período."
+              />
             </GlassCard>
           </div>
         </>
