@@ -240,6 +240,13 @@ export default function Dashboard() {
     ? Math.min((metricsData.ltvCacRatio / 3) * 100, 100)
     : 0;
 
+  // CAC exibido: se não houver novos clientes, mostra o total de custos de campanhas
+  const displayCAC = metricsData
+    ? (metricsData.newClientsCount > 0
+        ? metricsData.cac
+        : (metricsData.marketingCosts + metricsData.salesCosts))
+    : 0;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -504,7 +511,7 @@ export default function Dashboard() {
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <p className="text-2xl sm:text-3xl font-bold break-words">
-                <GradientText>{formatCurrency(metricsData.cac)}</GradientText>
+                <GradientText>{formatCurrency(displayCAC)}</GradientText>
               </p>
               <p className="text-xs text-muted-foreground mt-2">
                 {metricsData.newClientsCount} novos clientes
